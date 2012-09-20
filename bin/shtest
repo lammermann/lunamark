@@ -40,6 +40,9 @@ end
 local format = string.format
 
 local function ansicolor(s)
+  if nocolor then
+    return ""
+  end
   return string.char(27) .. '[' .. tostring(s) .. 'm'
 end
 
@@ -129,6 +132,7 @@ Options:
   --prog,-p CMD      Program to run for tests
   --opts,-o OPTS     Command-line options to use in tests
   --tidy,-t          Normalize output using html tidy
+  --nocolor,-n       suppress colourizing output
   --version,-V       Version information
   --help,-h          This message
 ]]
@@ -138,11 +142,12 @@ local long_opts = {
   prog = "p",
   opts = "o",
   tidy = "t",
+  nocolor = "n",
   version = "V",
   help = "h"
 }
 
-local short_opts = "d:p:o:tVh"
+local short_opts = "d:p:o:tnVh"
 local optarg,optind = alt_getopt.get_opts(arg, short_opts, long_opts)
 
 if optarg.h then
@@ -160,6 +165,7 @@ local pattern = arg[optind]
 cmdname = optarg.p or "bin/lunamark"
 testopts = optarg.o
 normalize = optarg.t
+nocolor = optarg.n
 
 do_matching_tests(testdir, pattern, run_test)
 io.write(string.format("Passed: %d\nFailed: %d\n", tests_passed, tests_failed))

@@ -305,6 +305,8 @@ defaults.
 
 local long_opts = {
   to = "t",
+  read = "r",
+  from = "f",
   layout = "l",
   extensions = "X",
   output = "o",
@@ -316,7 +318,7 @@ local long_opts = {
   help = "h"
 }
 
-local short_opts = "t:l:X:o:sT:d:0Vh"
+local short_opts = "t:r:f:l:X:o:sT:d:0Vh"
 
 local optarg,optind = alt_getopt.get_opts(arg, short_opts, long_opts)
 
@@ -334,7 +336,14 @@ local to = optarg.t or "html"
 ensure_one_of("--to,-t", to,
   {"markdown","html","html5","dzslides","docbook","latex","context","man"})
 
-local reader = lunamark.reader.markdown
+local from = optarg.f or optarg.r or "markdown"
+ensure_one_of("--from,-f,--read,-r", from,
+  {"markdown","pandoc","asciidoc"})
+
+local reader = lunamark.reader[from]
+if not reader then
+  lunamark.util.err("Unknown reader: " .. tostring(from), 5)
+end
 
 local extensions = {  -- defaults
   containers = false,

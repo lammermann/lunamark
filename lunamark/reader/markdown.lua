@@ -968,7 +968,7 @@ function M.new(writer, options)
   end
 
   if options.alter_syntax and type(options.alter_syntax) == "function" then
-    syntax = options.alter_syntax(syntax)
+    syntax = options.alter_syntax(syntax, writer, options)
   end
 
   blocks = Ct(syntax)
