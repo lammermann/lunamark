@@ -1,0 +1,33 @@
+lunamark -r asciidoc
+<<<
+Level 1
+-------
+Text.
+
+Level 2
+~~~~~~~
+Text.
+
+Level 3 
+^^^^^^^
+Text.
+
+Level 4 
++++++++
+Text.
+>>>
+<h2>Level 1</h2>
+
+<p>Text.</p>
+
+<h3>Level 2</h3>
+
+<p>Text.</p>
+
+<h4>Level 3</h4>
+
+<p>Text.</p>
+
+<h5>Level 4</h5>
+
+<p>Text.</p>
