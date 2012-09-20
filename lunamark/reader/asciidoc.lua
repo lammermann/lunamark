@@ -211,18 +211,18 @@ function add_asciidoc_syntax(syntax, writer, options)
                   + R.spacechar^1 * Endline^-1 * R.eof / ""
                   + R.spacechar^1 * Endline^-1 * R.optionalspace / writer.space
 
-  local DirectImage   = lpeg.P("image::")
-                      * (tag / parse_inlines)
-                      * spnl
-                      * lparent
-                      * (url + Cc(""))  -- link can be empty [foo]()
-                      * optionaltitle
-                      * rparent
-                      / writer.image
+  --local DirectImage   = lpeg.P("image::")
+  --                    * (tag / parse_inlines)
+  --                    * spnl
+  --                    * lparent
+  --                    * (url + Cc(""))  -- link can be empty [foo]()
+  --                    * optionaltitle
+  --                    * rparent
+  --                    / writer.image
 
-  local IndirectImage  = exclamation * tag * (C(spnl) * tag)^-1 / indirect_image
+  --local IndirectImage  = exclamation * tag * (C(spnl) * tag)^-1 / indirect_image
 
-  local Image         = DirectImage + IndirectImage
+  --local Image         = DirectImage + IndirectImage
 
   ------------------------------------------------------------------------------
   -- Block elements

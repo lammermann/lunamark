@@ -1,0 +1,18 @@
+lunamark -r asciidoc
+<<<
+// A Comment
+
+== Title
+
+/////////
+Block Comment
+
+This shouldn't be prozessed
+// Inner Comment
+/////////
+
+This should // You shouldn't see this
+>>>
+<h2>Title</h2>
+
+<p>This should</p>
