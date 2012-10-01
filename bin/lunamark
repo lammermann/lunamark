@@ -37,6 +37,10 @@ It is slightly faster than the author's own C library
 
 # OPTIONS
 
+`--from,-f,--read,-r` *format*
+:   Specify format for input.
+    *format* can be `markdown`, `pandoc`, `mmd` or `asciidoc`.
+  {"markdown","pandoc","mmd","asciidoc"})
 `--to,-t` *format*
 :   Specify format for output.
     *format* can be `html`, `html5`, `dzslides`, `docbook`, `latex`, `context`, or `man`.
@@ -338,7 +342,7 @@ ensure_one_of("--to,-t", to,
 
 local from = optarg.f or optarg.r or "markdown"
 ensure_one_of("--from,-f,--read,-r", from,
-  {"markdown","pandoc","asciidoc"})
+  {"markdown","pandoc","mmd","asciidoc"})
 
 local reader = lunamark.reader[from]
 if not reader then

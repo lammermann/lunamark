@@ -224,5 +224,20 @@ function M.escaper(char_escapes, string_escapes)
   end
 end
 
+--- Copys every value from a table in the global context
+--
+-- `t`
+-- :   A table object.
+--
+-- `filter`
+-- :   A lua pattern. Only entries that match the pattern will be copied.
+function M.import_from(t, filter)
+  local filter = filter or ".*"
+  for key,val in pairs(t) do
+    if key:match(filter) then
+      _G[key] = val
+    end
+  end
+end
 
 return M

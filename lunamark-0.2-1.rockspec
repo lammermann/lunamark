@@ -52,6 +52,7 @@ build = {
        ["lunamark.reader.generic"]  = "lunamark/reader/generic.lua",
        ["lunamark.reader.markdown"] = "lunamark/reader/markdown.lua",
        ["lunamark.reader.pandoc"]   = "lunamark/reader/pandoc.lua",
+       ["lunamark.reader.mmd"]      = "lunamark/reader/mmd.lua",
        ["lunamark.reader.asciidoc"] = "lunamark/reader/asciidoc.lua",
        },
    }

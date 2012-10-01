@@ -1,0 +1,107 @@
+lunamark -r mmd
+<<<
+latex input:		mmd-article-header  
+Title:				Link Attributes Test  
+latex input:		mmd-article-begin-doc  
+latex footer:		mmd-memoir-footer  
+
+This is a formatted ![image][] and a [link][] with attributes.
+
+![image2]
+
+![image3]
+
+![image4]
+
+And [the link][link], [link] , and [][link] again.
+
+[link]
+
+[the link][link]
+
+[image]: http://path.to/image "Image title" width="40px" height="400px"
+[image2]: http://path.to/image "Image title" height="400px"
+[image3]: http://path.to/image "Image title" width="40px"
+[image4]: http://path.to/image "Image title"
+[link]: http://path.to/link.html "Some Link" class=external
+        style="border: solid black 1px;"
+
+
+Test various identifiers:
+
+[link-a]
+
+[link-1]
+
+[link--2]
+
+[link--a]
+
+[link---1]
+
+
+[link-a]: http://path.to/link-a.html
+[link-1]: http://path.to/link-1.html
+[link--a]: http://path.to/link--a.html
+[link--2]: http://path.to/link--2.html
+[link---1]: http://path.to/link---1.html
+
+
+Test link and markup ![and *this* but not **that**][image-attr]
+
+[image-attr]: http://path.to/image "Test *this* and **this**"
+>>>
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8"/>
+	<meta name="latexinput" content="mmd-article-header"/>
+	<title>Link Attributes Test</title>
+	<meta name="latexinput" content="mmd-article-begin-doc"/>
+	<meta name="latexfooter" content="mmd-memoir-footer"/>
+</head>
+<body>
+<p>This is a formatted <img src="http://path.to/image" alt="image" id="image" title="Image title" style="height:400px;width:40px;" /> and a <a href="http://path.to/link.html" title="Some Link" class="external" style="border: solid black 1px;">link</a> with attributes.</p>
+
+<figure>
+<img src="http://path.to/image" alt="image2" id="image2" title="Image title" style="height:400px;" />
+<figcaption>image2</figcaption></figure>
+
+
+
+<figure>
+<img src="http://path.to/image" alt="image3" id="image3" title="Image title" style="width:40px;" />
+<figcaption>image3</figcaption></figure>
+
+
+
+
+<figure>
+<img src="http://path.to/image" alt="image4" id="image4" title="Image title" />
+<figcaption>image4</figcaption></figure>
+
+
+
+
+
+<p>And <a href="http://path.to/link.html" title="Some Link" class="external" style="border: solid black 1px;">the link</a>, <a href="http://path.to/link.html" title="Some Link" class="external" style="border: solid black 1px;">link</a> , and <a href="http://path.to/link.html" title="Some Link" class="external" style="border: solid black 1px;"></a> again.</p>
+
+<p><a href="http://path.to/link.html" title="Some Link" class="external" style="border: solid black 1px;">link</a></p>
+
+<p><a href="http://path.to/link.html" title="Some Link" class="external" style="border: solid black 1px;">the link</a></p>
+
+<p>Test various identifiers:</p>
+
+<p><a href="http://path.to/link-a.html">link-a</a></p>
+
+<p><a href="http://path.to/link-1.html">link&#8211;1</a></p>
+
+<p><a href="http://path.to/link--2.html">link&#8211;2</a></p>
+
+<p><a href="http://path.to/link--a.html">link&#8211;a</a></p>
+
+<p><a href="http://path.to/link---1.html">link&#8212;1</a></p>
+
+<p>Test link and markup <img src="http://path.to/image" alt="and this but not that" id="image-attr" title="Test *this* and **this**" /></p>
+</body>
+</html>

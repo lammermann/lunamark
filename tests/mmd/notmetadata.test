@@ -1,0 +1,10 @@
+lunamark -r mmd
+<<<
+http://www.example.net/
+
+
+This should not be treated as metadata.
+>>>
+<p>http://www.example.net/</p>
+
+<p>This should not be treated as metadata.</p>
