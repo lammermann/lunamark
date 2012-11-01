@@ -12,7 +12,7 @@ TESTOPTS ?= --tidy
 all:
 	@echo Targets: test bench docs run-code-examples install clean
 
-.PHONY: test bench docs clean run-code-examples install website
+.PHONY: test bench docs clean run-code-examples install website standalone
 test:
 	LUNAMARK_EXTENSIONS="" bin/shtest ${TESTOPTS} -p ${PROG} ${OPTS}
 
@@ -39,10 +39,10 @@ coverage:
 	luacov
 
 %.1: bin/%
-	sed '1,/^@startman/d;/^@stopman/,$$d' $< | bin/lunamark -Xdefinition_lists,notes,-smart -t man -s -d section=1,title=$(subst bin/,,$<),left_footer="${version}",date="${date}" -o $@
+	sed '1,/^@startman/d;/^@stopman/,$$d' $< | bin/lunamark -Xdefinition_lists,-smart -t man -s -d section=1,title=$(subst bin/,,$<),left_footer="${version}",date="${date}" -o $@
 
 %.1.html: bin/% ${templatesdir}/man.html
-	sed '1,/^@startman/d;/^@stopman/,$$d' $< | bin/lunamark -Xdefinition_lists,notes,-smart -t html5 --template ${templatesdir}/man.html -s -d section=1,title=$(subst bin/,,$<),left_footer="${version}",date="${date}" -o $@
+	sed '1,/^@startman/d;/^@stopman/,$$d' $< | bin/lunamark -Xdefinition_lists,-smart -t html5 --template ${templatesdir}/man.html -s -d section=1,title=$(subst bin/,,$<),left_footer="${version}",date="${date}" -o $@
 
 docs: doc lunamark.1 lunadoc.1 lunamark.1.html lunadoc.1.html
 
@@ -62,7 +62,11 @@ website: docs ${web}/index.html
 	cp -r doc lunamark.1.html lunadoc.1.html ${web}/
 
 ${web}/index.html: README.markdown ${templatesdir}/web.html
-	bin/lunamark -Xdefinition_lists,notes,smart --template ${templatesdir}/web.html -o $@ $<
+	bin/lunamark -Xdefinition_lists,smart --template ${templatesdir}/web.html -o $@ $<
+
+standalone: ${luas}
+	make -C standalone
 
 clean:
 	-rm -rf doc ${testfile} ${benchtext} lunamark.1 lunadoc.1
+	make -C standalone clean
