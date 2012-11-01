@@ -40,7 +40,6 @@ It is slightly faster than the author's own C library
 `--from,-f,--read,-r` *format*
 :   Specify format for input.
     *format* can be `markdown`, `pandoc`, `mmd` or `asciidoc`.
-  {"markdown","pandoc","mmd","asciidoc"})
 `--to,-t` *format*
 :   Specify format for output.
     *format* can be `html`, `html5`, `dzslides`, `docbook`, `latex`, `context`, or `man`.

@@ -49,11 +49,7 @@ build = {
        ["lunamark.writer.groff"]    = "lunamark/writer/groff.lua",
        ["lunamark.writer.man"]      = "lunamark/writer/man.lua",
        ["lunamark.reader"]          = "lunamark/reader.lua",
-       ["lunamark.reader.generic"]  = "lunamark/reader/generic.lua",
        ["lunamark.reader.markdown"] = "lunamark/reader/markdown.lua",
-       ["lunamark.reader.pandoc"]   = "lunamark/reader/pandoc.lua",
-       ["lunamark.reader.mmd"]      = "lunamark/reader/mmd.lua",
-       ["lunamark.reader.asciidoc"] = "lunamark/reader/asciidoc.lua",
        },
    }
 }
