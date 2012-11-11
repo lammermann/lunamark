@@ -230,7 +230,8 @@ function M.new(writer, options)
       Paragraph             = M.fail,
       Plain                 = Plain,
 
-      Inline                = V("Str")
+      Inline                = V("InlineComment")
+                            + V("Str")
                             + V("Space")
                             + V("Endline")
                             + V("UlOrStarLine")
@@ -248,6 +249,7 @@ function M.new(writer, options)
                             + V("Smart")
                             + V("Symbol"),
 
+      InlineComment         = M.fail,
       Str                   = M.fail,
       Space                 = M.fail,
       Endline               = M.fail,

@@ -206,6 +206,10 @@ function add_asciidoc_syntax(syntax, writer, options)
   -- Inline elements
   ------------------------------------------------------------------------------
 
+  local InlineComment = (linechar - (optionalspace * slash^2))^1
+                        / parse_inlines
+                        * optionalspace * slash^2 * linechar^0
+
   local Str       = normalchar^1 / writer.string
 
   local Endline   = newline * -( -- newline, but not before...
@@ -257,6 +261,7 @@ function add_asciidoc_syntax(syntax, writer, options)
   syntax.DefinitionList = DefinitionList
   syntax.DisplayHtml    = DisplayHtml
   syntax.Paragraph      = Paragraph
+  syntax.InlineComment  = InlineComment
   syntax.Str            = Str
   syntax.Endline        = Endline
   syntax.Space          = Space
