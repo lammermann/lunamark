@@ -389,13 +389,35 @@ for x in extensions_opt:gmatch("[%+%-]?[%a_]+") do
   end
 end
 
+local data = {}
+data.timestamp = os.date("%Y-%m-%d %X")
+data.sources = args -- todo change
+local keys = {}
+if optarg.d then
+  for x in string.gmatch(optarg.d, "[%w_]+=[^,]+") do
+    local k,v = string.match(x, "([^=]*)=(.*)")
+    if keys[k] then
+      if keys[k] == "string" then
+        data[k] = {data[k], v}
+      elseif keys[k] == "array" then
+        data[k] = table.insert(data[k],v)
+      end
+      keys[k] = "array"
+    else
+      data[k] = tostring(v) -- todo convert to writer.string in writer
+      keys[k] = "string"
+    end
+  end
+end
+
 local output = optarg.o
 local ok, msg = pcall(function() io.output(output) end)
 if not ok then
   lunamark.util.err("Could not open '" .. output .. "' for writing.\n" .. msg, 9)
 end
 
-local writer_options = extensions
+local writer_options    = extensions
+writer_options.metadata = data
 
 local layout = optarg["l"] or "default"
 ensure_one_of("--layout,-l",layout,{"default","compact","minimize"})
@@ -406,7 +428,8 @@ if not writer then
   lunamark.util.err("Unknown writer: " .. tostring(to), 5)
 end
 
-local reader_options = extensions
+local reader_options    = extensions
+reader_options.metadata = data
 
 local parse = reader.new(writer, reader_options)
 
@@ -458,26 +481,7 @@ if template then
 end
 
 if template_contents then
-  local data = metadata or {}
-  data.timestamp = os.date("%Y-%m-%d %X")
-  data.sources = args
-  local keys = {}
-  if optarg.d then
-    for x in string.gmatch(optarg.d, "[%w_]+=[^,]+") do
-      local k,v = string.match(x, "([^=]*)=(.*)")
-      if keys[k] then
-        if keys[k] == "string" then
-          data[k] = {data[k], v}
-        elseif keys[k] == "array" then
-          data[k] = table.insert(data[k],v)
-        end
-        keys[k] = "array"
-      else
-        data[k] = writer.string(v)
-        keys[k] = "string"
-      end
-    end
-  end
+  data = metadata or data
   data.body = body
   data["if"] = cosmo.cif  -- this activates the "if" keyword
   data.sepby = lunamark.util.sepby  -- actives "sepby" keyword
@@ -485,10 +489,6 @@ if template_contents then
   io.write(result)
 else
   io.write(body)
-end
-
-if not template_contents then
   io.write("\n")
 end
-
 
