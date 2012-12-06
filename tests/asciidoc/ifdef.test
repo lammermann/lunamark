@@ -1,0 +1,43 @@
+lunamark -r asciidoc -d test=true
+<<<
+ifdef::test[]
+
+== Level 1 
+Text.
+
+// This is not a valid endpoint
+endif::test1[]
+
+=== Level 2 
+Text.
+
+==== Level 3 
+Text.
+
+===== Level 4 
+Text.
+endif::test[]
+
+ifndef::test[]
+This shouldn't be visible
+endif::test[]
+>>>
+<h2>Level 1</h2>
+
+<p>Text.</p>
+
+<p>endif::test1[]</p>
+
+<h3>Level 2</h3>
+
+<p>Text.</p>
+
+<h4>Level 3</h4>
+
+<p>Text.</p>
+
+<h5>Level 4</h5>
+
+<p>Text.</p>
+
+

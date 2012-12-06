@@ -42,6 +42,7 @@ M.slash                  = P("/")
 M.equal                  = P("=")
 M.colon                  = P(":")
 M.semicolon              = P(";")
+M.comma                  = P(",")
 M.exclamation            = P("!")
 M.tilde                  = P("~")
 
@@ -206,8 +207,10 @@ function M.new(writer, options)
 
       Comment               = M.fail,
 
-      Block                 = V("Blockquote")
+      Block                 = V("Preprocess")
+                            + V("Blockquote")
                             + V("Verbatim")
+                            + V("PassThrough")
                             + V("HorizontalRule")
                             + V("BulletList")
                             + V("OrderedList")
@@ -218,8 +221,10 @@ function M.new(writer, options)
                             + V("Paragraph")
                             + V("Plain"),
 
+      Preprocess            = M.fail,
       Blockquote            = M.fail,
       Verbatim              = M.fail,
+      PassThrough           = M.fail,
       HorizontalRule        = M.fail,
       BulletList            = M.fail,
       OrderedList           = M.fail,

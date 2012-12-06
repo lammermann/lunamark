@@ -10,35 +10,183 @@ local lower, upper, gsub, rep, gmatch, format, length =
 local P, R, S, V, C, Cg, Cb, Cmt, Cc, Cf, Ct, B, Cs =
   lpeg.P, lpeg.R, lpeg.S, lpeg.V, lpeg.C, lpeg.Cg, lpeg.Cb,
   lpeg.Cmt, lpeg.Cc, lpeg.Cf, lpeg.Ct, lpeg.B, lpeg.Cs
+local unicode = require("unicode")
+local utf8 = unicode.utf8
+local io = io
 
 util.import_from(generic)
 
 
 local M = {}
 
-local function delimited_block(delimiter)
-  --local deli_line = ((1 - #(linechar - delimiter)^1) * delimiter^4 * newline)
-  local deli_line = (delimiter^4 * newline)
-  return deli_line * lpeg.C((any - deli_line)^0) * deli_line
-end
-
-local function inline_macro(keyword)
-  return keyword * colon * lpeg.Ct(nonspacechar^1)
-    * lbracket * lpeg.Ct(nonspacechar^1) / attributes * rbracket
-end
-
-local function block_macro(keyword)
-  return keyword * colon * colon * lpeg.Ct(nonspacechar^1)
-    * lbracket * lpeg.Ct(nonspacechar^1) / attributes * rbracket
+local function delimited_block(start, finish)
+  local finish = finish or start
+  local deli_start  = start * newline
+  local deli_finish = newline * finish * newline
+  return deli_start * C((any - deli_finish)^0) * deli_finish
 end
 
 function add_asciidoc_syntax(syntax, writer, options)
+  ------------------------------------------------------------------------------
+  -- Helpers for AttributeLists
+  ------------------------------------------------------------------------------
+  local UnquotedField = Cs((any - dquote - comma - rbracket - lbracket)^0)
+  local QuotedField = dquote * Cs((any - dquote)^0) * dquote
+  local NamedField = Cg(Cs((nonspacechar - equal)^1) * equal * QuotedField)
+  local Sep = optionalspace * comma * optionalspace
+ 
+  local Attrs = ((QuotedField * Sep)^0 *
+      Cf(Ct("") * (NamedField * Sep)^0 * NamedField, rawset))
+    + ((QuotedField * Sep)^0 * QuotedField)
+    + ((UnquotedField * Sep)^0 * UnquotedField)
+
+  function attrlist(label)
+    --local label = label or P("")
+    return lbracket * optionalspace * Cg(Attrs, "attrs") * optionalspace * rbracket
+            * optionalspace
+  end
+
+  -- Title for Block Elements
+  local BlockTitle = period * C(linechar^1) * newline
+
+  ------------------------------------------------------------------------------
+  -- Macros
+  ------------------------------------------------------------------------------
+  local target = C((nonspacechar-colon * any-(lbracket+rbracket+newline))^0)
+
+  local function block_macro(keyword)
+    return P(keyword) * P("::") * target * attrlist() * newline
+  end
+  
+  local function inline_macro(keyword)
+    return P(keyword) * colon * target * attrlist()
+  end
+
+  ------------------------------------------------------------------------------
+  -- Helpers for links and references
+  ------------------------------------------------------------------------------
+  -- Normalize a asciidoc reference tag.  (Make lowercase, and collapse
+  -- adjacent whitespace characters.)
+  local function normalize_tag(tag)
+    return utf8.lower(gsub(rope_to_string(tag), "[ \n\r\t]+", " "))
+  end
+
+  -- List of references defined in the document
+  local references
+
+  -- add a reference to the list
+  local function register_link(tag,url,title)
+      references[normalize_tag(tag)] = { url = url, title = title }
+      return ""
+  end
+
+  -- lookup link reference and return either
+  -- the link or nil and fallback text.
+  local function lookup_reference(label,sps,tag)
+      local tagpart
+      if not tag then
+          tag = label
+          tagpart = ""
+      elseif tag == "" then
+          tag = label
+          tagpart = "[]"
+      else
+          tagpart = {"[", parse_inlines(tag), "]"}
+      end
+      if sps then
+        tagpart = {sps, tagpart}
+      end
+      local r = references[normalize_tag(tag)]
+      if r then
+        return r
+      else
+        return nil, {"[", parse_inlines(label), "]", tagpart}
+      end
+  end
+
+  -- lookup link reference and return a link, if the reference is found,
+  -- or a bracketed label otherwise.
+  local function indirect_link(label,sps,tag)
+    return function()
+      local r,fallback = lookup_reference(label,sps,tag)
+      if r then
+        return writer.link(parse_inlines_no_link(label), r.url, r.title)
+      else
+        return fallback
+      end
+    end
+  end
+
+  ------------------------------------------------------------------------------
+  -- System Macros
+  ------------------------------------------------------------------------------
+  local function include(path)
+    -- @todo find path relative to source file
+    local f = io.open(path, "r")
+    local inpt = {}
+    if f then
+      table.insert(inpt, f:read("*all"))
+    else
+      util.err("Could not open file '" .. path .. "'", 7)
+    end
+    local inp = table.concat(inpt, "\n")
+    if inp:find("\r",1,true) then
+      inp = inp:gsub("\r\n","\n") -- convert DOS line endings
+    end
+    return inp
+  end
+
+  local inc   = block_macro("include")
+    / function(path) return generic.parse_blocks(include(path) .. "\n") end
+  local inc1   = block_macro("include1") / include
+  local eval   = block_macro("eval")     / "TODO"
+  local sys    = block_macro("sys")      / "TODO"
+  local sys2   = block_macro("sys2")     / "TODO"
+
+  local function conditional(start, finish)
+    local deli_start     = P(start) * P("::") * Cg(target, "t1")
+                           * Cg(attrlist(), "attrs") * newline
+    local deli_finish_1  = newline * P(finish) * P("::") * Cg(target, "t2")
+    local deli_finish_2  = Cg(attrlist(), "ignored") * newline
+    local deli_finish    = deli_finish_1 * deli_finish_2
+    local deli_finish_eq = Cmt(deli_finish_1 * Cb("t1") * Cb("t2")
+                               * deli_finish_2,
+                           function (s, i, a, b) return a == b end)
+    return deli_start * Cg((any - deli_finish_eq)^0, "content") * deli_finish
+           * Cb("t1") * Cb("attrs") * Cb("content")
+  end
+
+  local function if_defined(target, attrs, content)
+    local t = options.metadata[target]
+    if t then return generic.parse_blocks(content .. "\n\n") end
+    return generic.parse_blocks(content .. "\n\n")
+    --return ""
+  end
+  local function if_ndefined(target, attrs, content)
+    local t = options.metadata[target]
+    if not t then return generic.parse_blocks(content .. "\n\n") end
+    return ""
+  end
+
+  local ifdef  = conditional("ifdef", "endif")  / if_defined
+  local ifndef = conditional("ifndef", "endif") / if_ndefined
+  local ifeval = conditional("ifeval", "endif") / "TODO"
+
+  ------------------------------------------------------------------------------
+  -- Delimited Blocks
+  ------------------------------------------------------------------------------
+  local PassThrough  = delimited_block(plus^4)       / writer.plain
+  local ListingBlock = delimited_block(dash^4)       / writer.code
+  local LiteralBlock = delimited_block(period^4)     / writer.verbatim
+  local QuoteBlock   = delimited_block(underscore^4) / writer.blockquote
+  local ExampleBlock = delimited_block(equal^4)      / writer.code
+
   ------------------------------------------------------------------------------
   -- Comments
   ------------------------------------------------------------------------------
 
   local CommentLine    = slash^2 * line
-  local CommentBlock   = delimited_block(slash)
+  local CommentBlock   = delimited_block(slash^4)
   local Comment        = (CommentBlock + CommentLine) / ""
 
   ------------------------------------------------------------------------------
@@ -203,8 +351,20 @@ function add_asciidoc_syntax(syntax, writer, options)
                           ) / writer.definitionlist
 
   ------------------------------------------------------------------------------
+  -- Tables
+  ------------------------------------------------------------------------------
+  local Table = delimited_block("|" * equal^4) / "TODO"
+
+  ------------------------------------------------------------------------------
   -- Inline elements
   ------------------------------------------------------------------------------
+  -- XRef 
+  local XRef    = P("<<") * (UnquotedField * Sep)^0 * UnquotedField * P(">>")
+                  / indirect_link
+  local XRefM   = inline_macro("xref") / indirect_link
+
+  -- Local Links
+  local LocalLink = inline_macro("link") / writer.link
 
   local InlineComment = (linechar - (optionalspace * slash^2))^1
                         / parse_inlines
@@ -222,14 +382,8 @@ function add_asciidoc_syntax(syntax, writer, options)
                   + spacechar^1 * Endline^-1 * eof / ""
                   + spacechar^1 * Endline^-1 * optionalspace / writer.space
 
-  --local DirectImage   = lpeg.P("image::")
-  --                    * (tag / parse_inlines)
-  --                    * spnl
-  --                    * lparent
-  --                    * (url + Cc(""))  -- link can be empty [foo]()
-  --                    * optionaltitle
-  --                    * rparent
-  --                    / writer.image
+  local InlineImage      = inline_macro("image") / writer.image
+  local BlockImage       = block_macro("image")  / writer.image
 
   --local IndirectImage  = exclamation * tag * (C(spnl) * tag)^-1 / indirect_image
 
@@ -238,9 +392,12 @@ function add_asciidoc_syntax(syntax, writer, options)
   ------------------------------------------------------------------------------
   -- Block elements
   ------------------------------------------------------------------------------
-  local nonindentspace         = space^-3 * - spacechar
+  -- BlockID 
+  local BlockId = P("[[") * (UnquotedField * Sep)^0 * UnquotedField * P("]]")
+                  * newline / register_link
+  local Anchor  = inline_macro("anchor") / register_link
 
-  local Verbatim       = delimited_block(period) / writer.verbatim
+  local nonindentspace = space^-3 * - spacechar
 
   local Paragraph      = nonindentspace * lpeg.Ct(syntax.Inline^1) * newline
                        * ( blankline^1
@@ -254,6 +411,8 @@ function add_asciidoc_syntax(syntax, writer, options)
 
   ------------------------------------------------------------------------------
 
+  syntax.Preprocess     = inc + inc1 + ifdef + ifndef
+  syntax.Verbatim       = PassThrough
   syntax.Header         = AtxHeader + SetextHeader
   syntax.Comment        = Comment
   syntax.BulletList     = BulletList
