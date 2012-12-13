@@ -48,7 +48,8 @@ function M.new(options)
 --- The table contains the following fields:
 
   options = options or {}
-  local metadata = util.table_copy(options.metadata) or {}
+  options.metadata = options.metadata or {}
+  local metadata = util.table_copy(options.metadata)
 
   --- Set metadata field `key` to `val`.
   function W.set_metadata(key, val)
