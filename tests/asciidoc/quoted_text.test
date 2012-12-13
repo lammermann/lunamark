@@ -1,0 +1,12 @@
+lunamark -r asciidoc
+<<<
+Word phrases 'enclosed in single quote characters' (acute accents) or
+_underline characters_ are emphasized.
+
+Word phrases *enclosed in asterisk characters* are rendered in a strong font
+(usually bold).
+>>>
+<p>Word phrases <em>enclosed in single quote characters</em> (acute accents) or <em>underline characters</em> are emphasized.</p>
+
+<p>Word phrases <strong>enclosed in asterisk characters</strong> are rendered in a strong font (usually bold).</p>
+

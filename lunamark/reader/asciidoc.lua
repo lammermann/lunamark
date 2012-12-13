@@ -381,6 +381,11 @@ function add_asciidoc_syntax(syntax, writer, options)
   local Space     = spacechar^2 * Endline / writer.linebreak
                   + spacechar^1 * Endline^-1 * eof / ""
                   + spacechar^1 * Endline^-1 * optionalspace / writer.space
+  local Strong    = asterisk * C((any - asterisk)^0) * asterisk
+                  / writer.strong
+  local Emph      = underscore * C((any - underscore)^0) * underscore
+                      / writer.emphasis
+                    + squote * C((any - squote)^0) * squote / writer.emphasis
 
   local InlineImage      = inline_macro("image") / writer.image
   local BlockImage       = block_macro("image")  / writer.image
@@ -420,6 +425,8 @@ function add_asciidoc_syntax(syntax, writer, options)
   syntax.Paragraph      = Paragraph
   syntax.InlineComment  = InlineComment
   syntax.Str            = Str
+  syntax.Strong         = Strong
+  syntax.Emph           = Emph
   syntax.Endline        = Endline
   syntax.Space          = Space
 

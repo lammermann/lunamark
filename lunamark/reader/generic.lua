@@ -236,11 +236,10 @@ function M.new(writer, options)
       Plain                 = Plain,
 
       Inline                = V("InlineComment")
-                            + V("Str")
+                            + V("Strong")
                             + V("Space")
                             + V("Endline")
                             + V("UlOrStarLine")
-                            + V("Strong")
                             + V("Emph")
                             + V("NoteRef")
                             + V("Link")
@@ -252,10 +251,10 @@ function M.new(writer, options)
                             + V("HtmlEntity")
                             + V("EscapedChar")
                             + V("Smart")
-                            + V("Symbol"),
+                            + V("Symbol")
+                            + V("Str"),
 
       InlineComment         = M.fail,
-      Str                   = M.fail,
       Space                 = M.fail,
       Endline               = M.fail,
       UlOrStarLine          = M.fail,
@@ -271,7 +270,8 @@ function M.new(writer, options)
       HtmlEntity            = M.fail,
       EscapedChar           = M.fail,
       Smart                 = M.fail,
-      Symbol                = Plain
+      Symbol                = M.fail,
+      Str                   = M.Plain
     }
 
   if options.alter_syntax and type(options.alter_syntax) == "function" then
