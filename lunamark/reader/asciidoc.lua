@@ -91,7 +91,7 @@ function add_asciidoc_syntax(syntax, writer, options)
           tag = label
           tagpart = "[]"
       else
-          tagpart = {"[", parse_inlines(tag), "]"}
+          tagpart = {"[", generic.parse_inlines(tag), "]"}
       end
       if sps then
         tagpart = {sps, tagpart}
@@ -100,7 +100,7 @@ function add_asciidoc_syntax(syntax, writer, options)
       if r then
         return r
       else
-        return nil, {"[", parse_inlines(label), "]", tagpart}
+        return nil, {"[", generic.parse_inlines(label), "]", tagpart}
       end
   end
 
@@ -160,8 +160,8 @@ function add_asciidoc_syntax(syntax, writer, options)
     local t = options.metadata[target]
     if t then return generic.parse_blocks(content .. "\n\n") end
     return generic.parse_blocks(content .. "\n\n")
-    --return ""
   end
+
   local function if_ndefined(target, attrs, content)
     local t = options.metadata[target]
     if not t then return generic.parse_blocks(content .. "\n\n") end
@@ -210,13 +210,13 @@ function add_asciidoc_syntax(syntax, writer, options)
   -- parse atx header
   local AtxHeader = lpeg.Cg(HeadingStart,"level")
                      * optionalspace
-                     * (lpeg.C(line) / strip_atx_end / parse_inlines)
+                     * (lpeg.C(line) / strip_atx_end / generic.parse_inlines)
                      * lpeg.Cb("level")
                      / writer.header
 
   -- parse setext header
   local SetextHeader = #(line * lpeg.S("=-~^+"))
-                     * lpeg.Ct(line / parse_inlines)
+                     * lpeg.Ct(line / generic.parse_inlines)
                      * HeadingLevel
                      * optionalspace * newline
                      / writer.header
@@ -332,7 +332,7 @@ function add_asciidoc_syntax(syntax, writer, options)
   local dlchunk = lpeg.Cs(line * (indentedline - blankline)^0)
 
   local function definition_list_item(term, defs, tight)
-    return { term = parse_inlines(term), definitions = defs }
+    return { term = generic.parse_inlines(term), definitions = defs }
   end
 
   local DefinitionListItemLoose = lpeg.C((linechar - defstartchar)^1) * defstartchar * skipblanklines
@@ -367,7 +367,7 @@ function add_asciidoc_syntax(syntax, writer, options)
   local LocalLink = inline_macro("link") / writer.link
 
   local InlineComment = (linechar - (optionalspace * slash^2))^1
-                        / parse_inlines
+                        / generic.parse_inlines
                         * optionalspace * slash^2 * linechar^0
 
   local Str       = normalchar^1 / writer.string
@@ -399,11 +399,9 @@ function add_asciidoc_syntax(syntax, writer, options)
 
   local nonindentspace = space^-3 * - spacechar
 
-  local Paragraph      = nonindentspace * lpeg.Ct(syntax.Inline^1) * newline
-                       * ( blankline^1
-                         + #hash
-                         + #(more * space^-1)
-                         )
+  local ParagraphEnd   = newline * ( blankline^1 + #hash + #(more * space^-1))
+  local Paragraph      = nonindentspace * (C((any-ParagraphEnd)^1)
+                          / generic.parse_inlines) * ParagraphEnd
                        / writer.paragraph
 
   -- use DisplayHtml for passthroug blocks

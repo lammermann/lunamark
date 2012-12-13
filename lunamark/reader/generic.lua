@@ -163,7 +163,7 @@ function M.new(writer, options)
     end
   end
 
-  function parse_inlines(str)
+  function M.parse_inlines(str)
     local res = lpegmatch(inlines, str)
     if res == nil
       then error(format("parse_inlines failed on:\n%s", str:sub(1,20)))
