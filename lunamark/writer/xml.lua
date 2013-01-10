@@ -20,6 +20,20 @@ function M.new(options)
   --  {1,2} means: a second level header inside a first-level
   local header_level_stack = {}
 
+	function Xml.write_tag(tag, atts, enclosed)
+		local open  = "<" .. tag
+		local close = "</" .. tag .. ">"
+		for k,v in pairs(atts) do
+			open = open .. " " .. tostring(k) .. '="' .. tostring(v) .. '"'
+		end
+		if enclosed then
+			open = open .. ">"
+		else
+			close = " />"
+		end
+		return {open, enclosed, close}
+	end
+
   function Xml.start_section(level)
     header_level_stack[#header_level_stack + 1] = level
     return "<" .. Xml.container .. ">"

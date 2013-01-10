@@ -70,6 +70,10 @@ function M.new(options)
     return {"<orderedlist>",Docbook.containersep,buffer,"</orderedlist>"}
   end
 
+	function Docbook.table(items, title, style)
+		return {}
+	end
+
   function Docbook.inline_html(s)
     return s
   end

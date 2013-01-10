@@ -172,6 +172,14 @@ function M.new(options)
     return util.intersperse(items,W.interblocksep)
   end
 
+	--- A table with contents `items` (an array). If optional
+	-- `title` is set, the table gets a caption. `style` is an
+	-- optional array that holds information about the table
+	-- style.
+	function W.table(items, title, style)
+		return ""
+	end
+
   --- Inline HTML.
   function W.inline_html(s)
     return ""
@@ -189,6 +197,11 @@ function M.new(options)
 
   --- Strongly emphasized text.
   function W.strong(s)
+    return s
+  end
+
+  --- Styled text
+  function W.styled(s, style)
     return s
   end
 

@@ -80,6 +80,10 @@ function M.new(options)
     return {"<ol", start, ">", containersep, intersperse(map(items, listitem), containersep), containersep, "</ol>"}
   end
 
+	function Html.table(items, title, style)
+		return {"<table>", "</table>"}
+	end
+
   function Html.inline_html(s)
     return s
   end
