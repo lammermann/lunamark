@@ -68,11 +68,11 @@ function add_asciidoc_syntax(syntax, writer, options)
   -- Normalize a asciidoc reference tag.  (Make lowercase, and collapse
   -- adjacent whitespace characters.)
   local function normalize_tag(tag)
-    return utf8.lower(gsub(rope_to_string(tag), "[ \n\r\t]+", " "))
+    return utf8.lower(gsub(util.rope_to_string(tag), "[ \n\r\t]+", " "))
   end
 
   -- List of references defined in the document
-  local references
+  local references = {}
 
   -- add a reference to the list
   local function register_link(tag,url,title)
@@ -194,29 +194,29 @@ function add_asciidoc_syntax(syntax, writer, options)
   ------------------------------------------------------------------------------
 
   -- parse Atx heading start and return level
-  local HeadingStart = #equal * lpeg.C(equal^-6) * -equal / length
+  local HeadingStart = #equal * C(equal^-6) * -equal / length
 
   -- parse setext header ending and return level
-  local HeadingLevel = equal^1 * lpeg.Cc(1)
-                     + dash^1 * lpeg.Cc(2)
-                     + tilde^1 * lpeg.Cc(3)
-                     + circumflex^1 * lpeg.Cc(4)
-                     + plus^1 * lpeg.Cc(5)
+  local HeadingLevel = equal^1 * Cc(1)
+                     + dash^1 * Cc(2)
+                     + tilde^1 * Cc(3)
+                     + circumflex^1 * Cc(4)
+                     + plus^1 * Cc(5)
 
   local function strip_atx_end(s)
     return s:gsub("[#%s]*\n$","")
   end
 
   -- parse atx header
-  local AtxHeader = lpeg.Cg(HeadingStart,"level")
+  local AtxHeader = Cg(HeadingStart,"level")
                      * optionalspace
-                     * (lpeg.C(line) / strip_atx_end / generic.parse_inlines)
-                     * lpeg.Cb("level")
+                     * (C(line) / strip_atx_end / generic.parse_inlines)
+                     * Cb("level")
                      / writer.header
 
   -- parse setext header
-  local SetextHeader = #(line * lpeg.S("=-~^+"))
-                     * lpeg.Ct(line / generic.parse_inlines)
+  local SetextHeader = #(line * S("=-~^+"))
+                     * Ct(line / generic.parse_inlines)
                      * HeadingLevel
                      * optionalspace * newline
                      / writer.header
@@ -225,17 +225,7 @@ function add_asciidoc_syntax(syntax, writer, options)
   -- Parsers used for asciidoc lists
   -----------------------------------------------------------------------------
 
-  -- gobble spaces to make the whole bullet or enumerator four spaces wide:
-  local function gobbletofour(s,pos,c)
-      if length(c) >= 3
-         then return lpegmatch(space^-1,s,pos)
-      elseif length(c) == 2
-         then return lpegmatch(space^-2,s,pos)
-      else return lpegmatch(space^-3,s,pos)
-      end
-  end
-
-  local bulletchar = lpeg.C(plus + asterisk + dash)
+  local bulletchar = C(plus + asterisk + dash)
 
   local bullet     = ( bulletchar * #spacing * (tab + space^-3)
                      + space * bulletchar * #spacing * (tab + space^-2)
@@ -245,28 +235,28 @@ function add_asciidoc_syntax(syntax, writer, options)
 
   local dig = digit
 
-  local enumerator = lpeg.C(dig^3 * period) * #spacing
-                   + lpeg.C(dig^2 * period) * #spacing * (tab + space^1)
-                   + lpeg.C(dig * period) * #spacing * (tab + space^-2)
-                   + space * lpeg.C(dig^2 * period) * #spacing
-                   + space * lpeg.C(dig * period) * #spacing * (tab + space^-1)
-                   + space * space * lpeg.C(dig^1 * period) * #spacing
-                   + lpeg.C(period^3) * #spacing
-                   + lpeg.C(period^2) * #spacing * (tab + space^1)
-                   + lpeg.C(period) * #spacing * (tab + space^-2)
-                   + space * lpeg.C(period^2) * #spacing
-                   + space * lpeg.C(period) * #spacing * (tab + space^-1)
-                   + space * space * lpeg.C(period^1) * #spacing
+  local enumerator = C(dig^3 * period) * #spacing
+                   + C(dig^2 * period) * #spacing * (tab + space^1)
+                   + C(dig * period) * #spacing * (tab + space^-2)
+                   + space * C(dig^2 * period) * #spacing
+                   + space * C(dig * period) * #spacing * (tab + space^-1)
+                   + space * space * C(dig^1 * period) * #spacing
+                   + C(period^3) * #spacing
+                   + C(period^2) * #spacing * (tab + space^1)
+                   + C(period) * #spacing * (tab + space^-2)
+                   + space * C(period^2) * #spacing
+                   + space * C(period) * #spacing * (tab + space^-1)
+                   + space * space * C(period^1) * #spacing
 
   local indent                 = space^-3 * tab
-                               + lpeg.P("    ") / ""
-  local indentedline           = indent    /"" * lpeg.C(linechar^1 * newline^-1)
-  local optionallyindentedline = indent^-1 /"" * lpeg.C(linechar^1 * newline^-1)
+                               + P("    ") / ""
+  local indentedline           = indent    /"" * C(linechar^1 * newline^-1)
+  local optionallyindentedline = indent^-1 /"" * C(linechar^1 * newline^-1)
 
   -- block followed by 0 or more optionally
   -- indented blocks with first line indented.
   local function indented_blocks(bl)
-    return lpeg.Cs( bl
+    return Cs( bl
              * (blankline^1 * indent * -blankline * bl)^0
              * blankline^1 )
   end
@@ -279,7 +269,7 @@ function add_asciidoc_syntax(syntax, writer, options)
 
   -- we use \001 as a separator between a tight list item and a
   -- nested list under it.
-  local NestedList            = lpeg.Cs((optionallyindentedline - starter)^1)
+  local NestedList            = Cs((optionallyindentedline - starter)^1)
                               / function(a) return "\001"..a end
 
   local ListBlockLine         = optionallyindentedline
@@ -290,21 +280,21 @@ function add_asciidoc_syntax(syntax, writer, options)
   local ListContinuationBlock = blanklines * (indent / "") * ListBlock
 
   local function TightListItem(starter)
-      return (lpeg.Cs(starter / "" * ListBlock * NestedList^-1) / generic.parse_blocks)
+      return (Cs(starter / "" * ListBlock * NestedList^-1) / generic.parse_blocks)
              * -(blanklines * indent)
   end
 
   local function LooseListItem(starter)
-      return lpeg.Cs( starter / "" * ListBlock * lpeg.Cc("\n")
+      return Cs( starter / "" * ListBlock * Cc("\n")
              * (NestedList + ListContinuationBlock^0)
              * (blanklines / "\n\n")
              ) / generic.parse_blocks
   end
 
-  local BulletList = ( lpeg.Ct(TightListItem(bullet)^1)
-                       * lpeg.Cc(true) * skipblanklines * -bullet
-                     + lpeg.Ct(LooseListItem(bullet)^1)
-                       * lpeg.Cc(false) * skipblanklines ) / writer.bulletlist
+  local BulletList = ( Ct(TightListItem(bullet)^1)
+                       * Cc(true) * skipblanklines * -bullet
+                     + Ct(LooseListItem(bullet)^1)
+                       * Cc(false) * skipblanklines ) / writer.bulletlist
 
   local function ordered_list(s,tight,startnum)
     if options.startnum then
@@ -315,39 +305,39 @@ function add_asciidoc_syntax(syntax, writer, options)
     return writer.orderedlist(s,tight,startnum)
   end
 
-  local OrderedList = lpeg.Cg(enumerator, "listtype") *
-                      ( lpeg.Ct(TightListItem(lpeg.Cb("listtype")) * TightListItem(enumerator)^0)
-                        * lpeg.Cc(true) * skipblanklines * -enumerator
-                      + lpeg.Ct(LooseListItem(lpeg.Cb("listtype")) * LooseListItem(enumerator)^0)
-                        * lpeg.Cc(false) * skipblanklines
-                      ) * lpeg.Cb("listtype") / ordered_list
+  local OrderedList = Cg(enumerator, "listtype") *
+                      ( Ct(TightListItem(Cb("listtype")) * TightListItem(enumerator)^0)
+                        * Cc(true) * skipblanklines * -enumerator
+                      + Ct(LooseListItem(Cb("listtype")) * LooseListItem(enumerator)^0)
+                        * Cc(false) * skipblanklines
+                      ) * Cb("listtype") / ordered_list
 
-  local defstartchar = lpeg.P("::") + lpeg.P(";;")
+  local defstartchar = P("::") + P(";;")
   local defstart     = ( #spacing * (tab + space^-3)
                      + space * #spacing * (tab + space^-2)
                      + space * space * #spacing * (tab + space^-1)
                      + space * space * space * #spacing
                      )
 
-  local dlchunk = lpeg.Cs(line * (indentedline - blankline)^0)
+  local dlchunk = Cs(line * (indentedline - blankline)^0)
 
   local function definition_list_item(term, defs, tight)
     return { term = generic.parse_inlines(term), definitions = defs }
   end
 
-  local DefinitionListItemLoose = lpeg.C((linechar - defstartchar)^1) * defstartchar * skipblanklines
-                           * lpeg.Ct((defstart * indented_blocks(dlchunk) / generic.parse_blocks)^1)
-                           * lpeg.Cc(false)
+  local DefinitionListItemLoose = C((linechar - defstartchar)^1) * defstartchar * skipblanklines
+                           * Ct((defstart * indented_blocks(dlchunk) / generic.parse_blocks)^1)
+                           * Cc(false)
                            / definition_list_item
 
-  local DefinitionListItemTight = lpeg.C((linechar - defstartchar)^1) * defstartchar * newline
-                           * lpeg.Ct((defstart * dlchunk / generic.parse_blocks)^1)
-                           * lpeg.Cc(true)
+  local DefinitionListItemTight = C((linechar - defstartchar)^1) * defstartchar * newline
+                           * Ct((defstart * dlchunk / generic.parse_blocks)^1)
+                           * Cc(true)
                            / definition_list_item
 
-  local DefinitionList =  ( lpeg.Ct(DefinitionListItemLoose^1) * lpeg.Cc(false)
-                          +  lpeg.Ct(DefinitionListItemTight^1)
-                             * (skipblanklines * -DefinitionListItemLoose * lpeg.Cc(true))
+  local DefinitionList =  ( Ct(DefinitionListItemLoose^1) * Cc(false)
+                          +  Ct(DefinitionListItemTight^1)
+                             * (skipblanklines * -DefinitionListItemLoose * Cc(true))
                           ) / writer.definitionlist
 
   ------------------------------------------------------------------------------
