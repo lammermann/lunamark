@@ -278,6 +278,19 @@ function M.new(writer, options)
     syntax = options.alter_syntax(syntax, writer, options)
   end
 
+  if options.debug then
+    for k, p in pairs(syntax) do
+      local enter = Cmt(P(true), function(s, p, ...)
+        print("ENTER", k) return p end);
+      local leave = Cmt(P(true), function(s, p, ...)
+        print("LEAVE", k) return p end) * (P("k") - P "k");
+      if type(p) ~= "string" then
+        syntax[k] = Cmt(enter * p + leave, function(s, p, ...)
+          print("---", k, "---") print(p, s:sub(1, p-1)) return p end)
+      end
+    end 
+  end
+
   blocks = Ct(syntax)
 
   local inlines_t = util.table_copy(syntax)

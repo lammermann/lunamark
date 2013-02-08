@@ -174,6 +174,10 @@ environment variable `LUNAMARK_EXTENSIONS` (see ENVIRONMENT below).
 :   Allow `#` instead of a digit for an ordered list enumerator
     (equivalent to `1`).
 
+`(-) debug`
+:   prints out a trace of the lpeg grammar for easier development of new
+    reader syntaxes.
+
 # TEMPLATES
 
 By default, lunamark will produce a fragment.  If the
@@ -361,6 +365,7 @@ local extensions = {  -- defaults
   require_blank_before_blockquote = false,
   require_blank_before_header = false,
   hash_enumerators = false,
+  debug = false,
 }
 
 if optarg["0"] then
