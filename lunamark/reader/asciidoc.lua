@@ -19,13 +19,6 @@ util.import_from(generic)
 
 local M = {}
 
-local function delimited_block(start, finish)
-  local finish = finish or start
-  local deli_start  = start * newline
-  local deli_finish = newline * finish * newline
-  return deli_start * C((any - deli_finish)^0) * deli_finish
-end
-
 function add_asciidoc_syntax(syntax, writer, options)
   ------------------------------------------------------------------------------
   -- Helpers for AttributeLists
@@ -41,25 +34,12 @@ function add_asciidoc_syntax(syntax, writer, options)
     + ((UnquotedField * Sep)^0 * UnquotedField)
 
   function attrlist(label)
-    --local label = label or P("")
+    if label then
+      return lbracket * optionalspace * label * (Sep * Cg(Attrs, "attrs"))^-1
+              * optionalspace * rbracket * optionalspace
+    end
     return lbracket * optionalspace * Cg(Attrs, "attrs") * optionalspace * rbracket
             * optionalspace
-  end
-
-  -- Title for Block Elements
-  local BlockTitle = period * C(linechar^1) * newline
-
-  ------------------------------------------------------------------------------
-  -- Macros
-  ------------------------------------------------------------------------------
-  local target = C((nonspacechar-colon * any-(lbracket+rbracket+newline))^0)
-
-  local function block_macro(keyword)
-    return P(keyword) * P("::") * target * attrlist() * newline
-  end
-  
-  local function inline_macro(keyword)
-    return P(keyword) * colon * target * attrlist()
   end
 
   ------------------------------------------------------------------------------
@@ -118,8 +98,140 @@ function add_asciidoc_syntax(syntax, writer, options)
   end
 
   ------------------------------------------------------------------------------
-  -- System Macros
+  -- Inline elements
   ------------------------------------------------------------------------------
+
+  local Str       = normalchar^1 / writer.string
+
+  local Endline   = newline * -( -- newline, but not before...
+                        blankline -- paragraph break
+                      + tightblocksep  -- nested list
+                      + eof       -- end of document
+                    ) * spacechar^0 / writer.space
+
+  local Space     = spacechar^2 * Endline / writer.linebreak
+                  + spacechar^1 * Endline^-1 * eof / ""
+                  + spacechar^1 * Endline^-1 * optionalspace / writer.space
+  ------------------------------------------------------------------------------
+  -- Text Formating
+  ------------------------------------------------------------------------------
+
+  -- Quoted Text
+  local function constraint_quote(qchar)
+    return qchar * C((any - (qchar * (spacing + period)))^0) * qchar
+  end
+
+  local function unconstraint_quote(qchar)
+    return qchar * qchar * C((any - (qchar * qchar))^0) * qchar * qchar
+  end
+
+  local Emph      = unconstraint_quote(underscore) / writer.emphasis
+                    + constraint_quote(squote) / writer.emphasis
+                    + constraint_quote(underscore) / writer.emphasis
+  local Strong    = unconstraint_quote(asterisk) / writer.strong
+                    + constraint_quote(asterisk) / writer.strong
+  local Mono      = unconstraint_quote(plus) / writer.monospace
+                    + constraint_quote(plus) / writer.monospace
+  local Quote = Emph + Strong + Mono
+
+  ------------------------------------------------------------------------------
+  -- Titles
+  ------------------------------------------------------------------------------
+
+  -- parse Atx title start and return level
+  local TitleStart = #equal * C(equal^-6) * -equal / length
+
+  -- parse setext header ending and return level
+  local TitleLevel = equal^1 * Cc(1)
+                     + dash^1 * Cc(2)
+                     + tilde^1 * Cc(3)
+                     + circumflex^1 * Cc(4)
+                     + plus^1 * Cc(5)
+
+  local function strip_atx_end(s)
+    return s:gsub("[=%s]*\n$","")
+  end
+
+  -- parse atx header
+  local AtxTitle = Cg(TitleStart,"level")
+                     * optionalspace
+                     * (C(line) / strip_atx_end / generic.parse_inlines)
+                     * Cb("level")
+                     / writer.header
+
+  -- parse setext header
+  local SetextTitle = #(line * S("=-~^+"))
+                     * Ct(line / generic.parse_inlines)
+                     * TitleLevel
+                     * optionalspace * newline
+                     / writer.header
+
+  local Title    = AtxTitle + SetextTitle
+
+  ------------------------------------------------------------------------------
+  -- Paragraphs
+  ------------------------------------------------------------------------------
+
+  local ParagraphEnd  = ( newline * blankline^1)
+                      + eof
+                      + V("DelimitedBlock")
+                      + V("List")
+
+  -- normal Paragraph
+  local NormalPara    = (C((any-ParagraphEnd)^1)
+                         / generic.parse_inlines) * ParagraphEnd
+                      / writer.paragraph
+
+  local Paragraph     = NormalPara
+
+  ------------------------------------------------------------------------------
+  -- Delimited Blocks
+  ------------------------------------------------------------------------------
+  local function delimited_block(start, finish)
+    local finish = finish or start
+    local deli_start  = start * newline
+    local deli_finish = newline * finish * newline
+    return deli_start * C((any - deli_finish)^0) * deli_finish
+  end
+
+  local PassThrough     = delimited_block(plus^4)       / writer.plain
+  local ListingBlock    = delimited_block(dash^4)       / writer.code
+  local LiteralBlock    = delimited_block(period^4)     / writer.verbatim
+  local QuoteBlock      = delimited_block(underscore^4) / writer.blockquote
+  local ExampleBlock    = delimited_block(equal^4)      / writer.code
+
+  local DelimitedBlock  = PassThrough
+                          + ListingBlock
+                          + LiteralBlock
+                          + QuoteBlock
+                          + ExampleBlock
+
+  ------------------------------------------------------------------------------
+  -- Macros
+  ------------------------------------------------------------------------------
+  local target = C((nonspacechar-colon * any-(lbracket+rbracket+newline))^0)
+
+  local function block_macro(keyword)
+    return P(keyword) * P("::") * target * attrlist() * newline
+  end
+  
+  local function inline_macro(keyword)
+    return P(keyword) * colon * target * attrlist()
+  end
+
+  local InlineComment = (linechar - (optionalspace * slash^2))^1
+                        / generic.parse_inlines
+                        * optionalspace * slash^2 * linechar^0
+
+  -- Block Macros
+  ---------------
+  local CommentLine  = slash^2 * line
+  local CommentBlock = delimited_block(slash^4)
+
+  local Comment      = CommentBlock + CommentLine
+
+  -- System Macros
+  ----------------
   local function include(path)
     -- @todo find path relative to source file
     local f = io.open(path, "r")
@@ -172,253 +284,97 @@ function add_asciidoc_syntax(syntax, writer, options)
   local ifndef = conditional("ifndef", "endif") / if_ndefined
   local ifeval = conditional("ifeval", "endif") / "TODO"
 
-  ------------------------------------------------------------------------------
-  -- Delimited Blocks
-  ------------------------------------------------------------------------------
-  local PassThrough  = delimited_block(plus^4)       / writer.plain
-  local ListingBlock = delimited_block(dash^4)       / writer.code
-  local LiteralBlock = delimited_block(period^4)     / writer.verbatim
-  local QuoteBlock   = delimited_block(underscore^4) / writer.blockquote
-  local ExampleBlock = delimited_block(equal^4)      / writer.code
-
-  ------------------------------------------------------------------------------
-  -- Comments
-  ------------------------------------------------------------------------------
-
-  local CommentLine    = slash^2 * line
-  local CommentBlock   = delimited_block(slash^4)
-  local Comment        = (CommentBlock + CommentLine) / ""
-
-  ------------------------------------------------------------------------------
-  -- Headers
-  ------------------------------------------------------------------------------
-
-  -- parse Atx heading start and return level
-  local HeadingStart = #equal * C(equal^-6) * -equal / length
-
-  -- parse setext header ending and return level
-  local HeadingLevel = equal^1 * Cc(1)
-                     + dash^1 * Cc(2)
-                     + tilde^1 * Cc(3)
-                     + circumflex^1 * Cc(4)
-                     + plus^1 * Cc(5)
-
-  local function strip_atx_end(s)
-    return s:gsub("[#%s]*\n$","")
-  end
-
-  -- parse atx header
-  local AtxHeader = Cg(HeadingStart,"level")
-                     * optionalspace
-                     * (C(line) / strip_atx_end / generic.parse_inlines)
-                     * Cb("level")
-                     / writer.header
-
-  -- parse setext header
-  local SetextHeader = #(line * S("=-~^+"))
-                     * Ct(line / generic.parse_inlines)
-                     * HeadingLevel
-                     * optionalspace * newline
-                     / writer.header
-
-  -----------------------------------------------------------------------------
-  -- Parsers used for asciidoc lists
-  -----------------------------------------------------------------------------
-
-  local bulletchar = C(plus + asterisk + dash)
-
-  local bullet     = ( bulletchar * #spacing * (tab + space^-3)
-                     + space * bulletchar * #spacing * (tab + space^-2)
-                     + space * space * bulletchar * #spacing * (tab + space^-1)
-                     + space * space * space * bulletchar * #spacing
-                     ) * -bulletchar
-
-  local dig = digit
-
-  local enumerator = C(dig^3 * period) * #spacing
-                   + C(dig^2 * period) * #spacing * (tab + space^1)
-                   + C(dig * period) * #spacing * (tab + space^-2)
-                   + space * C(dig^2 * period) * #spacing
-                   + space * C(dig * period) * #spacing * (tab + space^-1)
-                   + space * space * C(dig^1 * period) * #spacing
-                   + C(period^3) * #spacing
-                   + C(period^2) * #spacing * (tab + space^1)
-                   + C(period) * #spacing * (tab + space^-2)
-                   + space * C(period^2) * #spacing
-                   + space * C(period) * #spacing * (tab + space^-1)
-                   + space * space * C(period^1) * #spacing
-
-  local indent                 = space^-3 * tab
-                               + P("    ") / ""
-  local indentedline           = indent    /"" * C(linechar^1 * newline^-1)
-  local optionallyindentedline = indent^-1 /"" * C(linechar^1 * newline^-1)
-
-  -- block followed by 0 or more optionally
-  -- indented blocks with first line indented.
-  local function indented_blocks(bl)
-    return Cs( bl
-             * (blankline^1 * indent * -blankline * bl)^0
-             * blankline^1 )
-  end
-
-  ------------------------------------------------------------------------------
-  -- Lists
-  ------------------------------------------------------------------------------
-
-  local starter = bullet + enumerator
-
-  -- we use \001 as a separator between a tight list item and a
-  -- nested list under it.
-  local NestedList            = Cs((optionallyindentedline - starter)^1)
-                              / function(a) return "\001"..a end
-
-  local ListBlockLine         = optionallyindentedline
-                                - blankline - (indent^-1 * starter)
-
-  local ListBlock             = line * ListBlockLine^0
-
-  local ListContinuationBlock = blanklines * (indent / "") * ListBlock
-
-  local function TightListItem(starter)
-      return (Cs(starter / "" * ListBlock * NestedList^-1) / generic.parse_blocks)
-             * -(blanklines * indent)
-  end
-
-  local function LooseListItem(starter)
-      return Cs( starter / "" * ListBlock * Cc("\n")
-             * (NestedList + ListContinuationBlock^0)
-             * (blanklines / "\n\n")
-             ) / generic.parse_blocks
-  end
-
-  local BulletList = ( Ct(TightListItem(bullet)^1)
-                       * Cc(true) * skipblanklines * -bullet
-                     + Ct(LooseListItem(bullet)^1)
-                       * Cc(false) * skipblanklines ) / writer.bulletlist
-
-  local function ordered_list(s,tight,startnum)
-    if options.startnum then
-      startnum = tonumber(listtype) or 1  -- fallback for '#'
-    else
-      startnum = nil
-    end
-    return writer.orderedlist(s,tight,startnum)
-  end
-
-  local OrderedList = Cg(enumerator, "listtype") *
-                      ( Ct(TightListItem(Cb("listtype")) * TightListItem(enumerator)^0)
-                        * Cc(true) * skipblanklines * -enumerator
-                      + Ct(LooseListItem(Cb("listtype")) * LooseListItem(enumerator)^0)
-                        * Cc(false) * skipblanklines
-                      ) * Cb("listtype") / ordered_list
-
-  local defstartchar = P("::") + P(";;")
-  local defstart     = ( #spacing * (tab + space^-3)
-                     + space * #spacing * (tab + space^-2)
-                     + space * space * #spacing * (tab + space^-1)
-                     + space * space * space * #spacing
-                     )
-
-  local dlchunk = Cs(line * (indentedline - blankline)^0)
-
-  local function definition_list_item(term, defs, tight)
-    return { term = generic.parse_inlines(term), definitions = defs }
-  end
-
-  local DefinitionListItemLoose = C((linechar - defstartchar)^1) * defstartchar * skipblanklines
-                           * Ct((defstart * indented_blocks(dlchunk) / generic.parse_blocks)^1)
-                           * Cc(false)
-                           / definition_list_item
-
-  local DefinitionListItemTight = C((linechar - defstartchar)^1) * defstartchar * newline
-                           * Ct((defstart * dlchunk / generic.parse_blocks)^1)
-                           * Cc(true)
-                           / definition_list_item
-
-  local DefinitionList =  ( Ct(DefinitionListItemLoose^1) * Cc(false)
-                          +  Ct(DefinitionListItemTight^1)
-                             * (skipblanklines * -DefinitionListItemLoose * Cc(true))
-                          ) / writer.definitionlist
-
-  ------------------------------------------------------------------------------
-  -- Tables
-  ------------------------------------------------------------------------------
-  local Table = delimited_block("|" * equal^4) / "TODO"
-
-  ------------------------------------------------------------------------------
-  -- Inline elements
-  ------------------------------------------------------------------------------
-  -- XRef 
-  local XRef    = P("<<") * (UnquotedField * Sep)^0 * UnquotedField * P(">>")
-                  / indirect_link
-  local XRefM   = inline_macro("xref") / indirect_link
-
-  -- Local Links
-  local LocalLink = inline_macro("link") / writer.link
-
-  local InlineComment = (linechar - (optionalspace * slash^2))^1
-                        / generic.parse_inlines
-                        * optionalspace * slash^2 * linechar^0
-
-  local Str       = normalchar^1 / writer.string
-
-  local Endline   = newline * -( -- newline, but not before...
-                        blankline -- paragraph break
-                      + tightblocksep  -- nested list
-                      + eof       -- end of document
-                    ) * spacechar^0 / writer.space
-
-  local Space     = spacechar^2 * Endline / writer.linebreak
-                  + spacechar^1 * Endline^-1 * eof / ""
-                  + spacechar^1 * Endline^-1 * optionalspace / writer.space
-  local Strong    = asterisk * C((any - asterisk)^0) * asterisk
-                  / writer.strong
-  local Emph      = underscore * C((any - underscore)^0) * underscore
-                      / writer.emphasis
-                    + squote * C((any - squote)^0) * squote / writer.emphasis
-
-  local InlineImage      = inline_macro("image") / writer.image
-  local BlockImage       = block_macro("image")  / writer.image
-
-  --local IndirectImage  = exclamation * tag * (C(spnl) * tag)^-1 / indirect_image
-
-  --local Image         = DirectImage + IndirectImage
-
-  ------------------------------------------------------------------------------
-  -- Block elements
-  ------------------------------------------------------------------------------
-  -- BlockID 
-  local BlockId = P("[[") * (UnquotedField * Sep)^0 * UnquotedField * P("]]")
-                  * newline / register_link
-  local Anchor  = inline_macro("anchor") / register_link
-
-  local nonindentspace = space^-3 * - spacechar
-
-  local ParagraphEnd   = newline * ( blankline^1 + #hash + #(more * space^-1))
-  local Paragraph      = nonindentspace * (C((any-ParagraphEnd)^1)
-                          / generic.parse_inlines) * ParagraphEnd
-                       / writer.paragraph
-
-  -- use DisplayHtml for passthroug blocks
-  local DisplayHtml    = delimited_block(plus) / writer.plain
+  local BlockMacro = inc + inc1 + ifdef + ifndef
 
   ------------------------------------------------------------------------------
 
-  syntax.Preprocess     = inc + inc1 + ifdef + ifndef
-  syntax.Verbatim       = PassThrough
-  syntax.Header         = AtxHeader + SetextHeader
-  syntax.Comment        = Comment
-  syntax.BulletList     = BulletList
-  syntax.OrderedList    = OrderedList
-  syntax.DefinitionList = DefinitionList
-  syntax.DisplayHtml    = DisplayHtml
-  syntax.Paragraph      = Paragraph
-  syntax.InlineComment  = InlineComment
-  syntax.Str            = Str
-  syntax.Strong         = Strong
-  syntax.Emph           = Emph
-  syntax.Endline        = Endline
-  syntax.Space          = Space
+  local Blank          = blankline / ""
+                       + V("Comment") / ""
+
+  syntax =
+    { "Document",
+
+      Document          = V("Header")^-1
+                          --* V("Preamble")^-1
+                          * V("Blocks"),
+                          --* V("Section")^0,
+
+      Blocks                = Blank^0 *
+                              V("Block")^-1 *
+                              (Blank^0 / function() return writer.interblocksep end * V("Block"))^0 *
+                              Blank^0 *
+                              eof,
+
+      Header            = V("Title")
+                          * ( V("AuthorInfo") * V("RevisionInfo")^-1)^-1,
+
+      AuthorInfo        = V("FirstName")
+                          * ( V("MiddleName")^-1 * V("LastName") )^-1
+                          * V("EmailAddress")^-1,
+
+      RevisionInfo      = V("RevisionNumber")^-1
+                          * V("RevisionDate")
+                          * V("RevisionRemark")^-1,
+
+      Block             = V("Comment")
+                          + V("Title")
+                          + V("BlockMacro")
+                          + V("List")
+                          + V("DelimitedBlock")
+                          + V("Table")
+                          + V("AttributeEntry")
+                          + V("AttributeList")
+                          + V("BlockTitle")
+                          + V("Paragraph"),
+
+      Inline            = V("InlineComment")
+                          + V("Space")
+                          + V("Endline")
+                          + V("SpecialChar")
+                          + V("Quote")
+                          + V("SpecialWord")
+                          + V("Replacement")
+                          + V("Attribute")
+                          + V("InlineMacro")
+                          + V("Replacement2"),
+
+      ---------------------------------------------
+      Title             = Title,
+      FirstName         = fail,
+      MiddleName        = fail,
+      LastName          = fail,
+      EmailAddress      = fail,
+      RevisionNumber    = fail,
+      RevisionDate      = fail,
+      RevisionInfo      = fail,
+      RevisionRemark    = fail,
+
+      Comment           = Comment,
+      BlockTitle        = fail,
+      Paragraph         = Paragraph,
+      DelimitedBlock    = DelimitedBlock,
+      BlockMacro        = BlockMacro,
+      InlineMacro       = fail,
+      List              = fail,
+      Table             = fail,
+      SpecialChar       = fail,
+      SpecialWord       = fail,
+      Replacement       = fail,
+      Replacement2      = fail,
+      Attribute         = fail,
+      AttributeEntry    = fail,
+      AttributeList     = fail,
+      ListTerm          = fail,
+      ListParagraph     = fail,
+      ListContinuation  = fail,
+      ItemText          = fail,
+
+      InlineComment     = InlineComment,
+      Quote             = Quote,
+      Space             = Space,
+      Endline           = Endline,
+      Replacement2      = Str
+    }
 
   return syntax
 end
