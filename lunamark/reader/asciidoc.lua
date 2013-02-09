@@ -132,7 +132,16 @@ function add_asciidoc_syntax(syntax, writer, options)
                     + constraint_quote(asterisk) / writer.strong
   local Mono      = unconstraint_quote(plus) / writer.monospace
                     + constraint_quote(plus) / writer.monospace
-  local Quote = Emph + Strong + Mono
+
+  -- Superscript and Subscript
+  local SuperScript = circumflex * C((any - circumflex)^0) * circumflex
+                      / writer.super
+  local SubScript = tilde * C((any - tilde)^0) * tilde
+                      / writer.sub
+  local SuperSub  = C((any - SuperScript - SubScript)^0) / generic.parse_inlines
+                    * (SuperScript + SubScript)
+
+  local Quote = Emph + Strong + Mono + SuperSub
 
   ------------------------------------------------------------------------------
   -- Titles

@@ -205,6 +205,21 @@ function M.new(options)
     return s
   end
 
+  --- Monospaced text
+  function W.monospace(s)
+    return s
+  end
+
+  --- Superscript text
+  function W.super(s)
+    return s
+  end
+
+  --- Subscript text
+  function W.sub(s)
+    return s
+  end
+
   --- Block quotation.
   function W.blockquote(s)
     return s

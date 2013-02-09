@@ -1,0 +1,6 @@
+lunamark -r asciidoc
+<<<
+e^&#960;i^+1 = 0. H~2~O and x^10^. Some ^super text^
+and ~some sub text~
+>>>
+<p>e<sup>&#960;i</sup>+1 = 0. H<sub>2</sub>O and x<sup>10</sup>. Some<sup>super text</sup> and<sub>some sub text</sub></p>

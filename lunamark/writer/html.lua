@@ -100,6 +100,15 @@ function M.new(options)
     return {"<strong>", s, "</strong>"}
   end
 
+  function Html.super(s)
+    return {"<sup>", s, "</sup>"}
+  end
+
+  function Html.sub(s)
+    return {"<sub>", s, "</sub>"}
+  end
+
+
   function Html.blockquote(s)
     return {"<blockquote>", containersep, s, containersep, "</blockquote>"}
   end
