@@ -5,8 +5,13 @@ _underline characters_ are emphasized.
 
 Word phrases *enclosed in asterisk characters* are rendered in a strong font
 (usually bold).
+
+_inside_words_ the characters are ignored but you can mark parts of words with
+**c**onstraint __quo__tes.
 >>>
 <p>Word phrases <em>enclosed in single quote characters</em> (acute accents) or <em>underline characters</em> are emphasized.</p>
 
 <p>Word phrases <strong>enclosed in asterisk characters</strong> are rendered in a strong font (usually bold).</p>
+
+<p><em>inside_words</em> the characters are ignored but you can mark parts of words with <strong>c</strong>onstraint <em>quo</em>tes.</p>
 
