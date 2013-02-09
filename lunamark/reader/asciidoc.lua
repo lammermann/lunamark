@@ -219,9 +219,49 @@ function add_asciidoc_syntax(syntax, writer, options)
     return P(keyword) * colon * target * attrlist()
   end
 
+  -- Inline Macros
+  ----------------
+
+  -- Footnotes
+  local rawnotes = {}
+
+  -- like indirect_link
+  local function lookup_note(ref)
+    local found = rawnotes[normalize_tag(ref)]
+    if found then
+      return writer.note(generic.parse_blocks(found))
+    else
+      return {"[^", ref, "]"}
+    end
+  end
+
+  local function register_note(ref,rawnote)
+    rawnotes[normalize_tag(ref)] = rawnote
+    return ""
+  end
+
+  local function direct_note(target, attrs)
+    return writer.note(generic.parse_blocks(attrs))
+  end
+
+  local function footnoteref(target, attrs)
+    local ref = attrs[1]
+    local rawnote = attrs[2]
+    if rawnote then
+      register_note(ref, rawnote)
+    end
+    return lookup_note(ref)
+  end
+
+  local Footnote    = inline_macro("footnote")    * Cb("attrs") / direct_note
+  local FootnoteRef = inline_macro("footnoteref") * Ct(Cb("attrs")) / footnoteref
+
   local InlineComment = (linechar - (optionalspace * slash^2))^1
                         / generic.parse_inlines
                         * optionalspace * slash^2 * linechar^0
+
+  local InlineMacro   = Footnote
+                        + FootnoteRef
 
   -- Block Macros
   ---------------
@@ -354,7 +394,7 @@ function add_asciidoc_syntax(syntax, writer, options)
       Paragraph         = Paragraph,
       DelimitedBlock    = DelimitedBlock,
       BlockMacro        = BlockMacro,
-      InlineMacro       = fail,
+      InlineMacro       = InlineMacro,
       List              = fail,
       Table             = fail,
       SpecialChar       = fail,

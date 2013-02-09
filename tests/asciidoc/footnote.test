@@ -1,0 +1,17 @@
+lunamark -r asciidoc
+<<<
+A footnote footnote:[An example footnote.];
+a second footnote with a reference ID footnoteref:[note2,Second footnote.];
+finally a reference to the second footnote footnoteref:[note2].
+>>>
+<p>A footnote <sup><a href="#fn1" class="footnoteRef" id="fnref1">1</a></sup>; a second footnote with a reference ID <sup><a href="#fn2" class="footnoteRef" id="fnref2">2</a></sup>; finally a reference to the second footnote <sup><a href="#fn3" class="footnoteRef" id="fnref3">3</a></sup>.</p>
+
+<hr />
+
+<ol class="notes">
+<li id="fn1"><p>An example footnote. <a href="#fnref1" class="footnoteBackLink">↩</a></p></li>
+
+<li id="fn2"><p>Second footnote. <a href="#fnref2" class="footnoteBackLink">↩</a></p></li>
+
+<li id="fn3"><p>Second footnote. <a href="#fnref3" class="footnoteBackLink">↩</a></p></li>
+</ol>
