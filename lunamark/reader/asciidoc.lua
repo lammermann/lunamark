@@ -182,7 +182,17 @@ function add_asciidoc_syntax(syntax, writer, options)
                          / generic.parse_inlines) * ParagraphEnd
                       / writer.paragraph
 
-  local Paragraph     = NormalPara
+  -- literal Paragraph
+  local LiteralPara   = (attrlist("literal") * newline
+                        * C((any-ParagraphEnd)^1) * ParagraphEnd)
+                        / writer.verbatim
+                      + (spacechar^1
+                        * C((any-ParagraphEnd)^1) / function(s)
+                            return s:gsub("\n%s*","\n") end
+                          * ParagraphEnd)
+                        / writer.verbatim
+
+  local Paragraph     = LiteralPara + NormalPara
 
   ------------------------------------------------------------------------------
   -- Delimited Blocks

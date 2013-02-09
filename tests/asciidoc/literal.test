@@ -1,0 +1,18 @@
+lunamark -r asciidoc
+<<<
+[literal]
+Consul *necessitatibus* per id,
+consetetur, eu pro everti postulant
+homero verear ea mea, qui.
+
+    Consul *necessitatibus* per id,
+    consetetur, eu pro everti postulant
+    homero verear ea mea, qui.
+>>>
+<pre><code>Consul *necessitatibus* per id,
+consetetur, eu pro everti postulant
+homero verear ea mea, qui.</code></pre>
+
+<pre><code>Consul *necessitatibus* per id,
+consetetur, eu pro everti postulant
+homero verear ea mea, qui.</code></pre>
