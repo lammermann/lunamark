@@ -238,7 +238,7 @@ function add_asciidoc_syntax(syntax, writer, options)
   end
 
   local PassThrough     = delimited_block(plus^4)       / writer.plain
-  local ListingBlock    = delimited_block(dash^4)       / writer.code
+  local ListingBlock    = delimited_block(dash^4)       / writer.verbatim
   local LiteralBlock    = delimited_block(period^4)     / writer.verbatim
   local QuoteBlock      = delimited_block(underscore^4) / writer.blockquote
   local ExampleBlock    = delimited_block(equal^4)      / writer.code

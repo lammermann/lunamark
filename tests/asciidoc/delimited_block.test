@@ -1,0 +1,37 @@
+lunamark -r asciidoc
+<<<
+--------------------------------------
+#include <stdio.h>
+int main() {
+printf("Hello World!\n");
+exit(0);
+}
+--------------------------------------
+
+...................................
+Consul *necessitatibus* per id,
+consetetur, eu pro everti postulant
+homero verear ea mea, qui.
+...................................
+
+++++++++++++++++++++++++++++++++++++++
+<table border="1"><tr>
+<td>*Cell 1*</td>
+<td>*Cell 2*</td>
+</tr></table>
+++++++++++++++++++++++++++++++++++++++
+>>>
+<pre><code>#include &lt;stdio.h&gt;
+int main() {
+printf(&quot;Hello World!\n&quot;);
+exit(0);
+}</code></pre>
+
+<pre><code>Consul *necessitatibus* per id,
+consetetur, eu pro everti postulant
+homero verear ea mea, qui.</code></pre>
+
+<table border="1"><tr>
+<td>*Cell 1*</td>
+<td>*Cell 2*</td>
+</tr></table>
