@@ -143,6 +143,30 @@ function add_asciidoc_syntax(syntax, writer, options)
 
   local Quote = Emph + Strong + Mono + SuperSub
 
+  -- Replacements
+  local Copyright    = P("(C)") / "©"
+  local Trademark    = P("(TM)") / "™"
+  local RegTrademark = P("(R)") / "®"
+  local EmDash       = P("--") / "—"
+  local Ellipsis     = P("...") / ". . ."
+  local RightArrow   = P("->") / "→"
+  local LeftArrow    = P("<-") / "←"
+  local RDoubleArrow = P("=>") / "⇒"
+  local LDoubleArrow = P("<=") / "⇐"
+
+  local Replacements = Copyright
+                     + Trademark
+                     + RegTrademark
+                     + EmDash
+                     + Ellipsis
+                     + RightArrow
+                     + LeftArrow
+                     + RDoubleArrow
+                     + LDoubleArrow
+
+  local Replacement = C((any - Replacements)^0) / generic.parse_inlines
+                      * Replacements
+
   ------------------------------------------------------------------------------
   -- Titles
   ------------------------------------------------------------------------------
@@ -418,7 +442,7 @@ function add_asciidoc_syntax(syntax, writer, options)
       Table             = fail,
       SpecialChar       = fail,
       SpecialWord       = fail,
-      Replacement       = fail,
+      Replacement       = Replacement,
       Replacement2      = fail,
       Attribute         = fail,
       AttributeEntry    = fail,

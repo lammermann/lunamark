@@ -1,0 +1,7 @@
+lunamark -r asciidoc
+<<<
+(C) copyright, (TM) trademark, (R) registered trademark,
+-- em dash, ... ellipsis, -> right arrow, <- left arrow, => right
+double arrow, <= left double arrow.
+>>>
+<p>© copyright,™ trademark,® registered trademark,— em dash,. . . ellipsis,→ right arrow,← left arrow,⇒ right double arrow,⇐ left double arrow.</p>
