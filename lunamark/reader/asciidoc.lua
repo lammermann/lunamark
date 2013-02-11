@@ -174,7 +174,7 @@ function add_asciidoc_syntax(syntax, writer, options)
   -- parse Atx title start and return level
   local TitleStart = #equal * C(equal^-6) * -equal / length
 
-  -- parse setext header ending and return level
+  -- parse setext title ending and return level
   local TitleLevel = equal^1 * Cc(1)
                      + dash^1 * Cc(2)
                      + tilde^1 * Cc(3)
@@ -185,14 +185,14 @@ function add_asciidoc_syntax(syntax, writer, options)
     return s:gsub("[=%s]*\n$","")
   end
 
-  -- parse atx header
+  -- parse atx title
   local AtxTitle = Cg(TitleStart,"level")
                      * optionalspace
                      * (C(line) / strip_atx_end / generic.parse_inlines)
                      * Cb("level")
                      / writer.header
 
-  -- parse setext header
+  -- parse setext title
   local SetextTitle = #(line * S("=-~^+"))
                      * Ct(line / generic.parse_inlines)
                      * TitleLevel
@@ -299,12 +299,23 @@ function add_asciidoc_syntax(syntax, writer, options)
   local Footnote    = inline_macro("footnote")    * Cb("attrs") / direct_note
   local FootnoteRef = inline_macro("footnoteref") * Ct(Cb("attrs")) / footnoteref
 
+  -- Local Links
+  local function locallink(target, attrs)
+    local attrs = attrs or {}
+    local label = attrs[1] or ""
+    --return writer.link(label, target, attrs[1])
+    return writer.link(label, target)
+  end
+
+  local LocalLink = inline_macro("link") * Ct(Cb("attrs")) / locallink
+
   local InlineComment = (linechar - (optionalspace * slash^2))^1
                         / generic.parse_inlines
                         * optionalspace * slash^2 * linechar^0
 
   local InlineMacro   = Footnote
                         + FootnoteRef
+                        + LocalLink
 
   -- Block Macros
   ---------------

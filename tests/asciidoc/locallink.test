@@ -1,0 +1,5 @@
+lunamark -r asciidoc
+<<<
+link:downloads/foo.zip[download foo.zip]
+>>>
+<p><a href="downloads/foo.zip">download foo.zip</a></p>
