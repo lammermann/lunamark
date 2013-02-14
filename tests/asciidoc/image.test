@@ -1,0 +1,23 @@
+lunamark -r asciidoc
+<<<
+image:images/logo.png[Company Logo]
+
+image:images/logo.png["Company Logo",height="32"]
+
+image::images/logo.png[scaledwidth="75%",alt="Company Logo"]
+
+image::images/tiger.png["Tiger image",align="left"]
+
+[[id, caption]]
+.Image Title
+image::images/tiger.png["Tiger image",align="left"]
+>>>
+<p><img src="images/logo.png" alt="Company Logo" /></p>
+
+<p><img src="images/logo.png" alt="Company Logo" height="32" /></p>
+
+<div class="imageblock"><img src="images/logo.png" alt="Company Logo" width="75%" /></div>
+
+<div class="imageblock" style="text-align:left;"><img src="images/tiger.png" alt="Tiger image" /></div>
+
+<div class="imageblock" id="id" style="text-align:left;"><div class="title">Image Title</div><img src="images/tiger.png" alt="Tiger image" /></div>

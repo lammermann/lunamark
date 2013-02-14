@@ -147,8 +147,16 @@ function M.new(options)
 
   --- An image link with alt text `label`,
   -- source `src`, and title `title`.
-  function W.image(label, src, title)
+  -- optional `style` attributes.
+  function W.image(label, src, title, style)
     return label
+  end
+
+  --- An image block link with alt text `label`,
+  -- source `src`, and title `title`.
+  -- optional `style` attributes.
+  function W.blockimage(label, src, title, style)
+    return W.image(label, src, title, style)
   end
 
   --- A paragraph.
@@ -263,7 +271,7 @@ function M.new(options)
 $body
 ]]
 
-  return util.table_copy(W)
+  return W
 end
 
 return M

@@ -202,6 +202,24 @@ function add_asciidoc_syntax(syntax, writer, options)
   local Title    = AtxTitle + SetextTitle
 
   ------------------------------------------------------------------------------
+  -- Block Titles
+  ------------------------------------------------------------------------------
+
+  local BlockTitle = period * C(linechar^1) * newline
+
+  ------------------------------------------------------------------------------
+  -- BlockId Element
+  ------------------------------------------------------------------------------
+
+  local BlockId = P("[[") * UnquotedField * (Sep * UnquotedField)^-1
+                  * P("]]") * newline
+
+  local function block_element(pattern)
+    return Cg(Ct(BlockId^-1), "id") * Cg(Ct(BlockTitle^-1), "btitle") * pattern
+            * Cb("id") * Cb("btitle")
+  end
+
+  ------------------------------------------------------------------------------
   -- Paragraphs
   ------------------------------------------------------------------------------
 
@@ -309,6 +327,25 @@ function add_asciidoc_syntax(syntax, writer, options)
 
   local LocalLink = inline_macro("link") * Ct(Cb("attrs")) / locallink
 
+  -- Images
+  local function inline_img(target, attrs)
+    local attrs = attrs or {}
+    local label = attrs[1] or ""
+    if type(label) ~= "string" then label = "" end
+    local sty = {}
+    if attrs[#attrs] and type(attrs[#attrs]) == "table" then
+      sty = attrs[#attrs]
+    end
+    if sty.alt and label == "" then
+      label = sty.alt
+    end
+    sty.width = sty.width or sty.scaledwidth
+    local title = ""
+    return writer.image(label, target, title, sty)
+  end
+
+  local InlineImage = inline_macro("image") * Ct(Cb("attrs")) / inline_img
+
   local InlineComment = (linechar - (optionalspace * slash^2))^1
                         / generic.parse_inlines
                         * optionalspace * slash^2 * linechar^0
@@ -319,6 +356,28 @@ function add_asciidoc_syntax(syntax, writer, options)
 
   -- Block Macros
   ---------------
+
+  -- Images
+  local function block_img(target, attrs, id, btitle)
+    local attrs = attrs or {}
+    local title = btitle[1] or ""
+    local label = attrs[1] or ""
+    if type(label) ~= "string" then label = "" end
+    local sty = {}
+    if attrs[#attrs] and type(attrs[#attrs]) == "table" then
+      sty = attrs[#attrs]
+    end
+    sty.id = id[1] or sty.id
+    if sty.alt and label == "" then
+      label = sty.alt
+    end
+    sty.width = sty.width or sty.scaledwidth
+    return writer.blockimage(label, target, title, sty)
+  end
+
+  local BlockImage = block_element(block_macro("image") * Ct(Cb("attrs"))) / block_img
+
+  -- Comment Lines
   local CommentLine  = slash^2 * line
   local CommentBlock = delimited_block(slash^4)
 
@@ -344,10 +403,10 @@ function add_asciidoc_syntax(syntax, writer, options)
 
   local inc   = block_macro("include")
     / function(path) return generic.parse_blocks(include(path) .. "\n") end
-  local inc1   = block_macro("include1") / include
-  local eval   = block_macro("eval")     / "TODO"
-  local sys    = block_macro("sys")      / "TODO"
-  local sys2   = block_macro("sys2")     / "TODO"
+  local inc1  = block_macro("include1") / include
+  local eval  = block_macro("eval")     / "TODO"
+  local sys   = block_macro("sys")      / "TODO"
+  local sys2  = block_macro("sys2")     / "TODO"
 
   local function conditional(start, finish)
     local deli_start     = P(start) * P("::") * Cg(target, "t1")
@@ -379,6 +438,7 @@ function add_asciidoc_syntax(syntax, writer, options)
   local ifeval = conditional("ifeval", "endif") / "TODO"
 
   local BlockMacro = inc + inc1 + ifdef + ifndef
+                      + BlockImage
 
   ------------------------------------------------------------------------------
 

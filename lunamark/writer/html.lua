@@ -51,13 +51,43 @@ function M.new(options)
     return {"<a href=\"", Html.string(src), "\"", titattr, ">", lab, "</a>"}
   end
 
-  function Html.image(lab,src,tit)
-    local titattr, altattr
-    if type(tit) == "string" and #tit > 0
-       then titattr = " title=\"" .. Html.string(tit) .. "\""
-       else titattr = ""
-       end
-    return {"<img src=\"", Html.string(src), "\" alt=\"", lab, "\"", titattr, " />"}
+  function Html.image(lab,src,tit,sty)
+    local attrs = ""
+    local sty = sty or {}
+    if type(lab) == "string" and #lab > 0 then
+      attrs = " alt=\"" .. Html.string(lab) .. "\""
+    end
+    if type(tit) == "string" and #tit > 0 then
+      attrs = attrs .. " title=\"" .. Html.string(tit) .. "\""
+    end
+    if sty.id then
+      attrs = attrs .. " id=\"" .. Html.string(sty.id) .. "\""
+    end
+    if sty.height then
+      attrs = attrs .. " height=\"" .. Html.string(sty.height) .. "\""
+    end
+    if sty.width then
+      attrs = attrs .. " width=\"" .. Html.string(sty.width) .. "\""
+    end
+    return {"<img src=\"", Html.string(src), "\"", attrs, " />"}
+  end
+
+  function Html.blockimage(lab,src,tit,sty)
+    local attrs = ""
+    local title = ""
+    local sty = sty or {}
+    if sty.id then
+      attrs = " id=\"" .. Html.string(sty.id) .. "\""
+      sty.id = nil
+    end
+    if sty.align then
+      attrs = attrs .. " style=\"text-align:" .. Html.string(sty.align) .. ";\""
+    end
+    if type(tit) == "string" and #tit > 0 then
+      title = {"<div class=\"title\">",tit,"</div>"}
+    end
+    local img = Html.image(lab,src,"",sty)
+    return {"<div class=\"imageblock\"", attrs, ">", title, img, "</div>"}
   end
 
   function Html.paragraph(s)
