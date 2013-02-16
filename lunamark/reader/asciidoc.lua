@@ -326,6 +326,29 @@ function add_asciidoc_syntax(syntax, writer, options)
   local Footnote    = inline_macro("footnote")    * Cb("attrs") / direct_note
   local FootnoteRef = inline_macro("footnoteref") * Ct(Cb("attrs")) / footnoteref
 
+  -- URLs
+  local function url_link(url, label)
+    local label = label or url
+    return writer.link(label, url)
+  end
+
+  local Link  = Cs(( P("http://")
+                    + P("https://")
+                    + P("ftp:://")
+                    + P("file:://")
+                  )
+                * C(any - spacing -attrlist())^1)
+                * (attrlist() * Cb("attrs"))^-1
+              / url_link
+
+  local EMail   = Cs((nonspacechar - at)^1 * at
+                    * (nonspacechar - at - attrlist())^1)
+  local MailTo  = ( ( P("mailto:") * EMail
+                      * attrlist() * Cb("attrs"))
+                    + EMail
+                  )
+                / url_link
+
   -- Internal Cross References
   local function anchor_link(tag, title)
     local tag = normalize_tag(tag)
@@ -370,7 +393,7 @@ function add_asciidoc_syntax(syntax, writer, options)
 
   local InlineImage = inline_macro("image") * Ct(Cb("attrs")) / inline_img
 
-  local InlineComment = (linechar - (optionalspace * slash^2))^1
+  local InlineComment = (linechar - (optionalspace * slash^2) - Link)^1
                         / generic.parse_inlines
                         * optionalspace * slash^2 * linechar^0
 
@@ -378,6 +401,8 @@ function add_asciidoc_syntax(syntax, writer, options)
                         + XRef
                         + Footnote
                         + FootnoteRef
+                        + Link
+                        + MailTo
                         + LocalLink
                         + InlineImage
 

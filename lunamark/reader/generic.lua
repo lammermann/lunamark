@@ -45,6 +45,7 @@ M.semicolon              = P(";")
 M.comma                  = P(",")
 M.exclamation            = P("!")
 M.tilde                  = P("~")
+M.at                     = P("@")
 
 M.digit                  = R("09")
 M.hexdigit               = R("09","af","AF")

@@ -1,0 +1,8 @@
+lunamark -r asciidoc
+<<<
+http://www.docbook.org/[DocBook.org]
+http://www.docbook.org/
+mailto:joe.bloggs@foobar.com[email Joe Bloggs]
+joe.bloggs@foobar.com
+>>>
+<p><a href="http://www.docbook.org/">DocBook.org</a> <a href="http://www.docbook.org/">http://www.docbook.org/</a> <a href="joe.bloggs@foobar.com">email Joe Bloggs</a> <a href="joe.bloggs@foobar.com">joe.bloggs@foobar.com</a></p>
