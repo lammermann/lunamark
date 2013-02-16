@@ -56,13 +56,13 @@ function add_asciidoc_syntax(syntax, writer, options)
 
   -- add a reference to the list
   local function register_link(tag,url,title)
-      references[normalize_tag(tag)] = { url = url, title = title }
-      return ""
+    references[normalize_tag(tag)] = { url = url, title = title }
+    return ""
   end
 
   -- lookup link reference and return either
   -- the link or nil and fallback text.
-  local function lookup_reference(label,sps,tag)
+  local function lookup_reference(tag, label)
       local tagpart
       if not tag then
           tag = label
@@ -72,9 +72,6 @@ function add_asciidoc_syntax(syntax, writer, options)
           tagpart = "[]"
       else
           tagpart = {"[", generic.parse_inlines(tag), "]"}
-      end
-      if sps then
-        tagpart = {sps, tagpart}
       end
       local r = references[normalize_tag(tag)]
       if r then
@@ -86,14 +83,13 @@ function add_asciidoc_syntax(syntax, writer, options)
 
   -- lookup link reference and return a link, if the reference is found,
   -- or a bracketed label otherwise.
-  local function indirect_link(label,sps,tag)
-    return function()
-      local r,fallback = lookup_reference(label,sps,tag)
-      if r then
-        return writer.link(parse_inlines_no_link(label), r.url, r.title)
-      else
-        return fallback
-      end
+  local function indirect_link(tag, label)
+    local label = label or tag
+    local r,fallback = lookup_reference(tag, label)
+    if r then
+      return writer.link(generic.parse_inlines_no_link(label), r.url, r.title)
+    else
+      return fallback
     end
   end
 
@@ -223,6 +219,18 @@ function add_asciidoc_syntax(syntax, writer, options)
   -- Paragraphs
   ------------------------------------------------------------------------------
 
+  local function paragraph_block(para, id, title)
+    local attrs = {}
+    if id[1] then
+      local tag = normalize_tag(id[1])
+      local url = "#" .. tag
+      register_link(tag, url, id[2])
+      attrs.id = tag
+      return writer.block(para, attrs)
+    end
+    return para
+  end
+
   local ParagraphEnd  = ( newline * blankline^1)
                       + eof
                       + V("DelimitedBlock")
@@ -243,7 +251,8 @@ function add_asciidoc_syntax(syntax, writer, options)
                           * ParagraphEnd)
                         / writer.verbatim
 
-  local Paragraph     = LiteralPara + NormalPara
+  local Paragraphs    = LiteralPara + NormalPara
+  local Paragraph     = block_element(Paragraphs) / paragraph_block
 
   ------------------------------------------------------------------------------
   -- Delimited Blocks
@@ -317,6 +326,21 @@ function add_asciidoc_syntax(syntax, writer, options)
   local Footnote    = inline_macro("footnote")    * Cb("attrs") / direct_note
   local FootnoteRef = inline_macro("footnoteref") * Ct(Cb("attrs")) / footnoteref
 
+  -- Internal Cross References
+  local function anchor_link(tag, title)
+    local tag = normalize_tag(tag)
+    local url = "#" .. tag
+    register_link(tag, url, title)
+    return writer.anchor(tag)
+  end
+
+  local Anchor  = inline_macro("anchor") * Cb("attrs") / anchor_link
+
+  local XRField = Cs((any - Sep - P(">>"))^0)
+  local XRef1   = P("<<") * XRField * (Sep * XRField)^-1 * P(">>")
+  local XRef2   = inline_macro("xref") * Cb("attrs")
+  local XRef    = ( XRef1 + XRef2 ) / indirect_link
+
   -- Local Links
   local function locallink(target, attrs)
     local attrs = attrs or {}
@@ -350,7 +374,9 @@ function add_asciidoc_syntax(syntax, writer, options)
                         / generic.parse_inlines
                         * optionalspace * slash^2 * linechar^0
 
-  local InlineMacro   = Footnote
+  local InlineMacro   = Anchor
+                        + XRef
+                        + Footnote
                         + FootnoteRef
                         + LocalLink
 

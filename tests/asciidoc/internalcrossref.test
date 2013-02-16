@@ -1,0 +1,19 @@
+lunamark -r asciidoc
+<<<
+[[anchor,xreflabel]]
+This is a paragraph linked with an anchor.
+
+anchor:anchor2[Text label]
+Here is another one with standard macro syntax.
+
+They're referenced with <<anchor2>> and xref:anchor[].
+
+You can also use captions: <<anchor2, caption>> and xref:anchor[mycaption].
+>>>
+<div id="anchor"><p>This is a paragraph linked with an anchor.</p></div>
+
+<p><a id="anchor2"></a> Here is another one with standard macro syntax.</p>
+
+<p>They&#39;re referenced with <a href="#anchor2" title="Text label">anchor2</a> and <a href="#anchor" title="xreflabel"></a>.</p>
+
+<p>You can also use captions: <a href="#anchor2" title="Text label">caption</a> and <a href="#anchor" title="xreflabel">mycaption</a>.</p>

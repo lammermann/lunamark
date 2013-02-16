@@ -38,6 +38,10 @@ function M.new(options)
   Html.container = "div"
   Html.linebreak = "<br/>"
 
+  function Html.block(enclosed, attrs)
+    return Html.write_tag(Html.container, attrs, enclosed)
+  end
+
   function Html.code(s)
     return {"<code>", Html.string(s), "</code>"}
   end
@@ -49,6 +53,10 @@ function M.new(options)
        else titattr = ""
        end
     return {"<a href=\"", Html.string(src), "\"", titattr, ">", lab, "</a>"}
+  end
+
+  function Html.anchor(id)
+    return {"<a id=\"", Html.string(id), "\"></a>"}
   end
 
   function Html.image(lab,src,tit,sty)

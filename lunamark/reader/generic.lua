@@ -171,7 +171,7 @@ function M.new(writer, options)
     end
   end
 
-  function parse_inlines_no_link(str)
+  function M.parse_inlines_no_link(str)
     local res = lpegmatch(inlines_no_link, str)
     if res == nil
       then error(format("parse_inlines_no_link failed on:\n%s", str:sub(1,20)))

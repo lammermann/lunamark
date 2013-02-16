@@ -87,6 +87,12 @@ function M.new(options)
     return ""
   end
 
+  --- Create block around enclosed blocks `enclosed` with
+  -- attributes `attrs`.
+  function W.block(enclosed, attrs)
+    return enclosed
+  end
+
   --- Plain text block (not formatted as a pragraph).
   function W.plain(s)
     return s
@@ -143,6 +149,12 @@ function M.new(options)
   -- and title `title`.
   function W.link(label, uri, title)
     return label
+  end
+
+  --- An anchor mark as reference for links with 
+  -- id `id`.
+  function W.anchor(id)
+    return ""
   end
 
   --- An image link with alt text `label`,
