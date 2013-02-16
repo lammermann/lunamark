@@ -379,6 +379,7 @@ function add_asciidoc_syntax(syntax, writer, options)
                         + Footnote
                         + FootnoteRef
                         + LocalLink
+                        + InlineImage
 
   -- Block Macros
   ---------------
