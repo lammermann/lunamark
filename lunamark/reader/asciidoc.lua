@@ -282,7 +282,7 @@ function add_asciidoc_syntax(syntax, writer, options)
   local target = C((nonspacechar-colon * any-(lbracket+rbracket+newline))^0)
 
   local function block_macro(keyword)
-    return P(keyword) * P("::") * target * attrlist() * newline
+    return P(keyword) * P("::") * target * attrlist() * (newline + eof)
   end
   
   local function inline_macro(keyword)
@@ -493,6 +493,142 @@ function add_asciidoc_syntax(syntax, writer, options)
                       + BlockImage
 
   ------------------------------------------------------------------------------
+  -- Tables
+  ------------------------------------------------------------------------------
+
+  local Multiplier = Cg(C(digit^1) * asterisk, "multiplier")^-1
+
+  local halignvals = {
+    ["<"] = "left",
+    ["^"] = "center",
+    [">"] = "right",
+  }
+  local HAlign = Cg(C(S("<^>")) / halignvals, "align")
+  local valignvals = {
+    ["<"] = "top",
+    ["^"] = "center",
+    [">"] = "bottom",
+  }
+  local VAlign = Cg(C(S("<^>")) / valignvals, "valign")
+  local Align  = HAlign^-1  * (period * VAlign)^-1
+
+  local Width = Cg(Cs(digit^1) * percent^-1, "width")^-1
+
+  local cstyles = {
+    e = writer.emphasis,
+    s = writer.strong,
+  }
+  local CStyle = Cg(C(S("demshalv")) / cstyles, "style")^-1
+
+  -- Coloumn Specifiers
+  ---------------------
+  local function process_colls(cols)
+    local out = {}
+    local j = 1
+    for i,c in ipairs(cols) do
+      c.multiplier = c.multiplier or 1
+      for k=1, c.multiplier do
+        out[j] = c
+        j = j + 1
+      end
+    end
+    return out
+  end
+
+  local ColSpecifier = Ct(Multiplier * Align * Width * CStyle)
+
+  local Cols = Ct(ColSpecifier * (comma * ColSpecifier)^0) / process_colls
+
+  -- Cell Specifiers
+  ------------------
+  local CSpan  = Cg(digit^1, "colspan")
+  local RSpan  = Cg(digit^1, "rowspan")
+  local Span   = CSpan^-1 * (period * RSpan)^-1 * plus
+  local CMulti = Cg(digit^1, "colmulti")
+  local RMulti = Cg(digit^1, "rowmulti")
+  local Multi  = CMulti^-1 * (period * RMulti)^-1 * asterisk
+
+  local CellSpecifier = Ct((Span + Multi)^-1 * Align * CStyle)
+
+  -- Row Formats
+  --------------
+  local function csvrow(deli)
+    local deli = deli or comma
+    deli = P(deli)
+    local cell = Ct(Cg((any - newline - deli)^1, "content"))
+    return Ct((cell * deli)^0 * cell) * newline^-1
+  end
+
+  local function psvrow(deli)
+    local deli = deli or "|"
+    deli = spacechar^0 * Cg(CellSpecifier * -P("\\") * P(deli), "sty") * spacechar^0
+    local cell = Ct(deli * Cg(Cs((any - deli - (newline * deli))^0), "content"))
+    return Ct(cell^1 * newline)^0 * Ct(cell^1)
+  end
+
+  local function tablerow(format, deli)
+    local format = format or "psv"
+    local row = psvrow(deli)
+    if format == "csv" then
+      row = csvrow(deli)
+    end
+    local fun = function(path)
+      local pattern = row^1
+      return pattern:match(include(path))
+    end
+    return Ct(((block_macro("include") / fun) + row)^1)
+  end
+
+  local function process_table(tdata, attrs, id, title)
+    local title = title[1] or ""
+    local sty = {}
+    if type(attrs) == "table" then
+      if type(attrs[#attrs]) == "table" then
+        sty = attrs[#attrs]
+      end
+    end
+    if sty.frame == "topbot" then sty.frame = "hsides" end
+    local pattern = tablerow(sty.format, sty.separator)
+    local rows = pattern:match(tdata) or {}
+    if not sty.cols then
+      local fun = function (x)
+        local t = {}
+        for i=1,x do t[i] = {} end
+        return t
+      end
+      sty.cols = fun(#rows[1])
+    elseif type(sty.cols) == "string" then
+      sty.cols = Cols:match(sty.cols)
+    end
+    if sty.options then
+      local options = lpeg.match(Ct(C((any-comma)^1)*(comma*C((any-comma)^1))^0), sty.options)
+      sty.options = {}
+      for _,o in ipairs(options) do
+        sty.options[o] = true
+      end
+    end
+    for _,r in ipairs(rows) do
+      local cidx = 1
+      for _,c in ipairs(r) do
+        c.content = c.content or ""
+        c.sty = c.sty or {}
+        for k,v in pairs(sty.cols[cidx] or {}) do
+          c.sty[k] = c.sty[k] or v
+        end
+        local fun = c.sty.style or generic.parse_inlines
+        c.content = fun(c.content)
+        cidx = cidx + (c.sty.colspan or 1)
+      end
+    end
+    return writer.table(rows, title, sty)
+  end
+
+  local TableBlock  = (attrlist() * newline)^-1 * delimited_block("|" * equal^4)
+                      * Ct(Cb("attrs"))
+
+  local Table = block_element(TableBlock) / process_table
+
+  ------------------------------------------------------------------------------
 
   local Blank          = blankline / ""
                        + V("Comment") / ""
@@ -562,7 +698,7 @@ function add_asciidoc_syntax(syntax, writer, options)
       BlockMacro        = BlockMacro,
       InlineMacro       = InlineMacro,
       List              = fail,
-      Table             = fail,
+      Table             = Table,
       SpecialChar       = fail,
       SpecialWord       = fail,
       Replacement       = Replacement,

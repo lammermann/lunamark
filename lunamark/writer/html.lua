@@ -118,8 +118,88 @@ function M.new(options)
     return {"<ol", start, ">", containersep, intersperse(map(items, listitem), containersep), containersep, "</ol>"}
   end
 
+  local function tableattrs(sty)
+    local sty = sty or {}
+    local rules = Html.string(sty.grid or "all")
+    local width = Html.string(sty.width or "100%")
+    local frame = Html.string(sty.frame or "border")
+    local cspaceing = Html.string(sty.cellspaceing or "0")
+    local cpadding = Html.string(sty.cellpadding or "4")
+    local attrs = " rules=\"" .. rules  .. "\" width=\"" .. width .. "\""
+    local attrs = attrs .. " frame=\"" .. frame .. "\" cellspaceing=\""
+    local attrs = attrs .. cspaceing .. " cellpadding=\"" .. cpadding .. "\""
+    return attrs
+  end
+
+  local function tablecell(cell, tag)
+    local tag = tag or "td"
+    local s = cell.sty or {} -- style
+    s.align = s.align or "left"
+    s.valign = s.valign or "top"
+    local attrs = " align=\"" .. Html.string(s.align) .. "\" valign=\""
+    local attrs = attrs .. Html.string(s.valign) .. "\""
+    if s.rowspan then
+      attrs = " rowspan=\"" .. Html.string(s.rowspan) .. "\"" .. attrs
+    end
+    if s.colspan then
+      attrs = " colspan=\"" .. Html.string(s.colspan) .. "\"" .. attrs
+    end
+    return {"<", tag , attrs, ">", cell.content, "</", tag, ">"}
+  end
+
+  local function tableheader(rowitems)
+    local elements = {}
+    for i,ri in ipairs(rowitems) do
+      elements[i] = tablecell(ri, "th")
+    end
+    return {"\n", "<thead><tr>", elements, "</tr></thead>"}
+  end
+
+  local function tablefooter(rowitems)
+    local elements = {}
+    for i,ri in ipairs(rowitems) do
+      elements[i] = tablecell(ri)
+    end
+    return {"\n", "<tfoot><tr>", elements, "</tr></tfoot>"}
+  end
+
+  local function tablerow(rowitems)
+    local elements = {}
+    for i,ri in ipairs(rowitems) do
+      elements[i] = tablecell(ri)
+    end
+    return {"\n", "<tr>", elements, "</tr>"}
+  end
+
 	function Html.table(items, title, style)
-		return {"<table>", "</table>"}
+    local opts = style.options or {}
+    local rows = {}
+    for i,it in ipairs(items) do
+      if i == 1 and opts.header then
+        rows[i] = tableheader(it)
+      elseif i == #items and opts.footer then
+        rows[i] = tablefooter(it)
+      else
+        rows[i] = tablerow(it)
+      end
+    end
+    local attrs = tableattrs(style)
+    local body   = {"<tbody>", rows, "\n</tbody>" }
+    local caption = ""
+    if type(title) == "string" and #title > 0 then
+      caption = {"<caption class=\"title\">", title, "</caption>\n"}
+    end
+    local cols = ""
+    local allwidth = 0
+    for _,c in ipairs(style.cols) do
+      c.width = tonumber(c.width or 1)
+      allwidth = allwidth + c.width
+    end
+    for _,c in ipairs(style.cols) do
+      local width = (c.width * 100) / allwidth
+      cols = cols .. "<col width=\"" .. Html.string(width) .. "%\" />\n"
+    end
+		return {"<table", attrs, ">", "\n", caption, cols, body, "\n", "</table>"}
 	end
 
   function Html.inline_html(s)

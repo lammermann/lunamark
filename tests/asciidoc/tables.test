@@ -1,0 +1,118 @@
+lunamark -r asciidoc
+<<<
+[width="15%"]
+|=======
+|1 |2 |A
+|3 |4 |B
+|5 |6 |C
+|=======
+
+.An example table
+[width="50%",cols=">s,^m,e",frame="topbot",options="header,footer"]
+|==========================
+|      2+|Columns 2 and 3
+|1       |Item 1  |Item 1
+|2       |Item 2  |Item 2
+|3       |Item 3  |Item 3
+|4       |Item 4  |Item 4
+|footer 1|footer 2|footer 3
+|==========================
+
+.Windtrainer workouts
+[width="80%",cols="3,^2,^2,10",options="header"]
+|=========================================================
+|Date |Duration |Avg HR |Notes
+
+|22-Aug-08 |10:24 | 157 |
+Worked out MSHR (max sustainable heart rate) by going hard
+for this interval.
+
+|22-Aug-08 |23:03 | 152 |
+Back-to-back with previous interval.
+
+|24-Aug-08 |40:00 | 145 |
+Moderately hard interspersed with 3x 3min intervals (2min
+hard + 1min really hard taking the HR up to 160).
+
+|=========================================================
+
+[format="csv",cols="^1,4*2",options="header"]
+|===================================================
+ID,Customer Name,Contact Name,Customer Address,Phone
+include::customers.csv[]
+|===================================================
+
+[cols="e,m,^,>s",width="25%"]
+|============================
+|1 >s|2 |3 |4
+^|5 2.2+^.^|6 .3+<.>m|7
+^|8
+|9 2+>|10
+|============================
+>>>
+<table rules="all" width="15%" frame="border" cellspaceing="0 cellpadding="4">
+<col width="33.333333333333%" />
+<col width="33.333333333333%" />
+<col width="33.333333333333%" />
+<tbody>
+<tr><td align="left" valign="top">1</td><td align="left" valign="top">2</td><td align="left" valign="top">A</td></tr>
+<tr><td align="left" valign="top">3</td><td align="left" valign="top">4</td><td align="left" valign="top">B</td></tr>
+<tr><td align="left" valign="top">5</td><td align="left" valign="top">6</td><td align="left" valign="top">C</td></tr>
+</tbody>
+</table>
+
+<table rules="all" width="50%" frame="hsides" cellspaceing="0 cellpadding="4">
+<caption class="title">An example table</caption>
+<col width="33.333333333333%" />
+<col width="33.333333333333%" />
+<col width="33.333333333333%" />
+<tbody>
+<thead><tr><th align="right" valign="top"><strong></strong></th><th colspan="2" align="center" valign="top">Columns 2 and 3</th></tr></thead>
+<tr><td align="right" valign="top"><strong>1</strong></td><td align="center" valign="top">Item 1</td><td align="left" valign="top"><em>Item 1</em></td></tr>
+<tr><td align="right" valign="top"><strong>2</strong></td><td align="center" valign="top">Item 2</td><td align="left" valign="top"><em>Item 2</em></td></tr>
+<tr><td align="right" valign="top"><strong>3</strong></td><td align="center" valign="top">Item 3</td><td align="left" valign="top"><em>Item 3</em></td></tr>
+<tr><td align="right" valign="top"><strong>4</strong></td><td align="center" valign="top">Item 4</td><td align="left" valign="top"><em>Item 4</em></td></tr>
+<tfoot><tr><td align="right" valign="top"><strong>footer 1</strong></td><td align="center" valign="top">footer 2</td><td align="left" valign="top"><em>footer 3</em></td></tr></tfoot>
+</tbody>
+</table>
+
+<table rules="all" width="80%" frame="border" cellspaceing="0 cellpadding="4">
+<caption class="title">Windtrainer workouts</caption>
+<col width="17.647058823529%" />
+<col width="11.764705882353%" />
+<col width="11.764705882353%" />
+<col width="58.823529411765%" />
+<tbody>
+<thead><tr><th align="left" valign="top">Date</th><th align="center" valign="top">Duration</th><th align="center" valign="top">Avg HR</th><th align="left" valign="top">Notes</th></tr></thead>
+<tr><td align="left" valign="top">22-Aug-08</td><td align="center" valign="top">10:24</td><td align="center" valign="top">157</td><td align="left" valign="top"> Worked out MSHR (max sustainable heart rate) by going hard for this interval.</td></tr>
+<tr><td align="left" valign="top">22-Aug-08</td><td align="center" valign="top">23:03</td><td align="center" valign="top">152</td><td align="left" valign="top"> Back-to-back with previous interval.</td></tr>
+<tr><td align="left" valign="top">24-Aug-08</td><td align="center" valign="top">40:00</td><td align="center" valign="top">145</td><td align="left" valign="top"> Moderately hard interspersed with 3x 3min intervals (2min hard + 1min really hard taking the HR up to 160).</td></tr>
+</tbody>
+</table>
+
+<table rules="all" width="100%" frame="border" cellspaceing="0 cellpadding="4">
+<col width="11.111111111111%" />
+<col width="22.222222222222%" />
+<col width="22.222222222222%" />
+<col width="22.222222222222%" />
+<col width="22.222222222222%" />
+<tbody>
+<thead><tr><th align="center" valign="top">ID</th><th align="left" valign="top">Customer Name</th><th align="left" valign="top">Contact Name</th><th align="left" valign="top">Customer Address</th><th align="left" valign="top">Phone</th></tr></thead>
+<tr><td align="center" valign="top">AROUT</td><td align="left" valign="top">Around the Horn</td><td align="left" valign="top">Thomas Hardy</td><td align="left" valign="top">120 Hanover Sq. London</td><td align="left" valign="top">(171) 555-7788</td></tr>
+<tr><td align="center" valign="top">BERGS</td><td align="left" valign="top">Berglunds snabbkop</td><td align="left" valign="top">Christina Berglund</td><td align="left" valign="top">Berguvsvagen 8 Lulea</td><td align="left" valign="top">0921-12 34 65</td></tr>
+<tr><td align="center" valign="top">BLAUS</td><td align="left" valign="top">Blauer See Delikatessen</td><td align="left" valign="top">Hanna Moos</td><td align="left" valign="top">Forsterstr. 57 Mannheim</td><td align="left" valign="top">0621-08460</td></tr>
+</tbody>
+</table>
+
+<table rules="all" width="25%" frame="border" cellspaceing="0 cellpadding="4">
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+<tbody>
+<tr><td align="left" valign="top"><em>1</em></td><td align="right" valign="top"><strong>2</strong></td><td align="center" valign="top">3</td><td align="right" valign="top"><strong>4</strong></td></tr>
+<tr><td align="center" valign="top"><em>5</em></td><td colspan="2" rowspan="2" align="center" valign="center">6</td><td rowspan="3" align="left" valign="bottom">7</td></tr>
+<tr><td align="center" valign="top"><em>8</em></td></tr>
+<tr><td align="left" valign="top"><em>9</em></td><td colspan="2" align="right" valign="top">10</td></tr>
+</tbody>
+</table>
