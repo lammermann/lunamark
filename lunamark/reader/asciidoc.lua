@@ -114,11 +114,13 @@ function add_asciidoc_syntax(syntax, writer, options)
 
   -- Quoted Text
   local function constraint_quote(qchar)
-    return qchar * C((any - (qchar * (spacing + period)))^0) * qchar
+    local wordending  = spacing + period + dash + lbracket + rbracket + lparent + rparent
+                        + eof
+    return attrlist()^-1 * qchar * C((any - (qchar * wordending))^0) * qchar
   end
 
   local function unconstraint_quote(qchar)
-    return qchar * qchar * C((any - (qchar * qchar))^0) * qchar * qchar
+    return attrlist()^-1 * qchar * qchar * C((any - (qchar * qchar))^0) * qchar * qchar
   end
 
   local Emph      = unconstraint_quote(underscore) / writer.emphasis
@@ -128,6 +130,8 @@ function add_asciidoc_syntax(syntax, writer, options)
                     + constraint_quote(asterisk) / writer.strong
   local Mono      = unconstraint_quote(plus) / writer.monospace
                     + constraint_quote(plus) / writer.monospace
+  local Unquoted  = unconstraint_quote(hash) / writer.styled
+                    + constraint_quote(hash) / writer.styled
 
   -- Superscript and Subscript
   local SuperScript = circumflex * C((any - circumflex)^0) * circumflex
@@ -137,7 +141,7 @@ function add_asciidoc_syntax(syntax, writer, options)
   local SuperSub  = C((any - SuperScript - SubScript)^0) / generic.parse_inlines
                     * (SuperScript + SubScript)
 
-  local Quote = Emph + Strong + Mono + SuperSub
+  local Quote = Emph + Strong + Mono + Unquoted + SuperSub
 
   -- Replacements
   local Copyright    = P("(C)") / "©"
