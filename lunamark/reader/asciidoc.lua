@@ -541,7 +541,7 @@ function add_asciidoc_syntax(syntax, writer, options)
 
   local ColSpecifier = Ct(Multiplier * Align * Width * CStyle)
 
-  local Cols = Ct(ColSpecifier * (comma * ColSpecifier)^0) / process_colls
+  local Cols = Ct(ColSpecifier * (Sep * ColSpecifier)^0) / process_colls
 
   -- Cell Specifiers
   ------------------
