@@ -633,6 +633,45 @@ function add_asciidoc_syntax(syntax, writer, options)
   local Table = block_element(TableBlock) / process_table
 
   ------------------------------------------------------------------------------
+  -- Attribute Entry
+  ------------------------------------------------------------------------------
+
+  local function attribute_entry(name, is_set, value)
+    local value = value or true
+    local name  = normalize_tag(name)
+    if is_set == false then
+      writer.set_metadata(name, false)
+    else
+      writer.set_metadata(name, value)
+    end
+    return ""
+  end
+
+  local EndAttEntry     = ((exclamation * Cc(false)) + Cc(true)) * colon
+  local AttVal          = optionalspace
+                          * C((linechar - newline
+                            - (spacechar^1 * plus * newline))^1)
+  local AttributeValue  = Cs((AttVal * spacechar^1 * plus * newline)^0
+                          * AttVal)
+
+  local AttributeEntry  = colon * C((any - (newline + EndAttEntry))^1)
+                          * EndAttEntry
+                          * AttributeValue^-1 * blankline
+                        / attribute_entry
+
+  ------------------------------------------------------------------------------
+  -- Attribute References
+  ------------------------------------------------------------------------------
+
+  local function attribute_ref(name)
+    local name  = normalize_tag(name)
+    return generic.parse_inlines(writer.get_metadata()[name])
+  end
+
+  local AttributeRef  = lcbrace * C((any-newline-rcbrace)^1) * rcbrace
+                      / attribute_ref
+
+  ------------------------------------------------------------------------------
 
   local Blank          = blankline / ""
                        + V("Comment") / ""
@@ -707,8 +746,8 @@ function add_asciidoc_syntax(syntax, writer, options)
       SpecialWord       = fail,
       Replacement       = Replacement,
       Replacement2      = fail,
-      Attribute         = fail,
-      AttributeEntry    = fail,
+      Attribute         = AttributeRef,
+      AttributeEntry    = AttributeEntry,
       AttributeList     = fail,
       ListTerm          = fail,
       ListParagraph     = fail,
