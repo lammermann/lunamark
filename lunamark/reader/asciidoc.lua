@@ -255,7 +255,12 @@ function add_asciidoc_syntax(syntax, writer, options)
                           * ParagraphEnd)
                         / writer.verbatim
 
-  local Paragraphs    = LiteralPara + NormalPara
+  -- Admonition Paragraphs
+  local admon_styles  = P("TIP") + P("NOTE") + P("IMPORTANT") + P("WARNING")
+                        + P("CAUTION")
+  local AdmonitionPara = admon_styles * colon * optionalspace * NormalPara
+
+  local Paragraphs    = LiteralPara + AdmonitionPara + NormalPara
   local Paragraph     = block_element(Paragraphs) / paragraph_block
 
   ------------------------------------------------------------------------------
@@ -274,10 +279,23 @@ function add_asciidoc_syntax(syntax, writer, options)
   local QuoteBlock      = delimited_block(underscore^4) / writer.blockquote
   local ExampleBlock    = delimited_block(equal^4)      / writer.code
 
+  -- Admonition Blocks
+  local function admon_block(t, title, para)
+    local atts = {}
+    atts["type"] = t
+    return writer.block(para, atts)
+  end
+
+  local AdmonitionBlock = attrlist(C(admon_styles)) * newline
+                          * (BlockTitle + Cc(false))
+                          * delimited_block(equal^4)
+                        / admon_block
+
   local DelimitedBlock  = PassThrough
                           + ListingBlock
                           + LiteralBlock
                           + QuoteBlock
+                          + AdmonitionBlock
                           + ExampleBlock
 
   ------------------------------------------------------------------------------
