@@ -10,7 +10,7 @@ lunadoc - simple markdown documentation for lua modules
 
 # SYNOPSIS
 
-luadoc [options] [file..]
+lunadoc [options] [file..]
 
 # DESCRIPTION
 
